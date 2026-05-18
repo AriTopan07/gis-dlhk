@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+
+class Pengawas extends Model
+{
+    use HasFactory, HasUuids;
+
+    protected $fillable = ['kordinator_id', 'nama'];
+
+    public function kordinator(): BelongsTo
+    {
+        return $this->belongsTo(Kordinator::class);
+    }
+
+    public function petugas(): HasMany
+    {
+        return $this->hasMany(Petugas::class);
+    }
+
+    public function lokasi(): HasOne
+    {
+        return $this->hasOne(Lokasi::class);
+    }
+}
