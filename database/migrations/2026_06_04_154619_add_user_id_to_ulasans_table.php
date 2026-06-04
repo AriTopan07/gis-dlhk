@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('ulasans', function (Blueprint $table) {
-            $table->foreignId('user_id')->nullable()->after('id')->constrained('users')->onDelete('cascade');
+            $table->foreignUuid('user_id')->nullable()->after('id')->constrained('users')->onDelete('cascade');
             // Make kordinator_id nullable so superadmin/admin can also create ulasan
             $table->foreignUuid('kordinator_id')->nullable()->change();
         });
