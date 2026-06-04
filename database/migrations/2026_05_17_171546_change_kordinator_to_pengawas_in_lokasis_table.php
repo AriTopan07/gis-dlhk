@@ -12,8 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('lokasis', function (Blueprint $table) {
-            $table->dropForeign(['kordinator_id']);
-            $table->dropColumn('kordinator_id');
+            if (Schema::hasColumn('lokasis', 'kordinator_id')) {
+                // SQLite may not support dropForeign easily without a separate package,
+                // but we will wrap it in try-catch just in case it fails after checking the column
+                try {
+                    $table->dropForeign(['kordinator_id']);
+                } catch (\Exception $e) {}
+                $table->dropColumn('kordinator_id');
+            }
         });
     }
 

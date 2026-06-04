@@ -24,6 +24,7 @@ class RolePermissionSeeder extends Seeder
             'users',
             'roles',
             'import',
+            'ulasan',
         ];
 
         $actions = ['view', 'create', 'edit', 'delete'];
@@ -39,12 +40,17 @@ class RolePermissionSeeder extends Seeder
 
         // ── ROLES ────────────────────────────────────────────────
         $superadmin = Role::firstOrCreate(['name' => 'superadmin',        'guard_name' => 'web']);
+        $admin      = Role::firstOrCreate(['name' => 'admin',             'guard_name' => 'web']);
         $kordinator = Role::firstOrCreate(['name' => 'kordinator',        'guard_name' => 'web']);
-        $pengawas   = Role::firstOrCreate(['name' => 'pengawas',          'guard_name' => 'web']);
-        $petugas    = Role::firstOrCreate(['name' => 'tenaga_kebersihan', 'guard_name' => 'web']);
 
         // Superadmin → semua permission
         $superadmin->syncPermissions(Permission::all());
+
+        // Admin → semua permission kecuali kelola roles
+        $adminPermissions = Permission::whereNotIn('name', [
+            'view roles', 'create roles', 'edit roles', 'delete roles'
+        ])->get();
+        $admin->syncPermissions($adminPermissions);
 
         // Kordinator → hanya view
         $kordinator->syncPermissions([
@@ -52,6 +58,7 @@ class RolePermissionSeeder extends Seeder
             'view lokasi',
             'view petugas',
             'view pengawas',
+            'view ulasan',
         ]);
 
         // Pengawas → view saja, lebih terbatas
@@ -59,6 +66,7 @@ class RolePermissionSeeder extends Seeder
             'view dashboard',
             'view lokasi',
             'view petugas',
+            'view ulasan',
         ]);
 
         // Tenaga Kebersihan → minimal

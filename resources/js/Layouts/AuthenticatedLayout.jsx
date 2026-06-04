@@ -55,6 +55,10 @@ export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
 
+    const hasPermission = (permission) => {
+        return user?.permissions?.includes(permission) || user?.roles?.includes('superadmin');
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
             <FlashToast />
@@ -74,30 +78,51 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
 
                             <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink href={route('dashboard')} active={route().current('dashboard')}>
-                                    Dashboard
-                                </NavLink>
-                                <NavLink href={route('lokasi.index')} active={route().current('lokasi.*')}>
-                                    Lokasi
-                                </NavLink>
-                                <NavLink href={route('kordinators.index')} active={route().current('kordinators.*')}>
-                                    Kordinator
-                                </NavLink>
-                                <NavLink href={route('pengawas.index')} active={route().current('pengawas.*')}>
-                                    Pengawas
-                                </NavLink>
-                                <NavLink href={route('petugas.index')} active={route().current('petugas.*')}>
-                                    Petugas
-                                </NavLink>
-                                <NavLink href={route('users.index')} active={route().current('users.*')}>
-                                    User
-                                </NavLink>
-                                <NavLink href={route('roles.index')} active={route().current('roles.*')}>
-                                    Role
-                                </NavLink>
-                                <NavLink href={route('import.index')} active={route().current('import.*')}>
-                                    Import
-                                </NavLink>
+                                {hasPermission('view dashboard') && (
+                                    <NavLink href={route('dashboard')} active={route().current('dashboard')}>
+                                        Dashboard
+                                    </NavLink>
+                                )}
+                                {hasPermission('view lokasi') && (
+                                    <NavLink href={route('lokasi.index')} active={route().current('lokasi.*')}>
+                                        Lokasi
+                                    </NavLink>
+                                )}
+                                {(hasPermission('view ulasan') || user?.roles?.includes('kordinator')) && (
+                                    <NavLink href={route('ulasan.index')} active={route().current('ulasan.*')}>
+                                        Ulasan
+                                    </NavLink>
+                                )}
+                                {hasPermission('view kordinators') && (
+                                    <NavLink href={route('kordinators.index')} active={route().current('kordinators.*')}>
+                                        Kordinator
+                                    </NavLink>
+                                )}
+                                {hasPermission('view pengawas') && (
+                                    <NavLink href={route('pengawas.index')} active={route().current('pengawas.*')}>
+                                        Pengawas
+                                    </NavLink>
+                                )}
+                                {hasPermission('view petugas') && (
+                                    <NavLink href={route('petugas.index')} active={route().current('petugas.*')}>
+                                        Petugas
+                                    </NavLink>
+                                )}
+                                {hasPermission('view users') && (
+                                    <NavLink href={route('users.index')} active={route().current('users.*')}>
+                                        User
+                                    </NavLink>
+                                )}
+                                {hasPermission('view roles') && (
+                                    <NavLink href={route('roles.index')} active={route().current('roles.*')}>
+                                        Role
+                                    </NavLink>
+                                )}
+                                {hasPermission('view import') && (
+                                    <NavLink href={route('import.index')} active={route().current('import.*')}>
+                                        Import
+                                    </NavLink>
+                                )}
                             </div>
                         </div>
 
@@ -141,14 +166,33 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 <div className={(showingNavigationDropdown ? 'block' : 'hidden') + ' sm:hidden'}>
                     <div className="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')}>Dashboard</ResponsiveNavLink>
-                        <ResponsiveNavLink href={route('lokasi.index')} active={route().current('lokasi.*')}>Lokasi</ResponsiveNavLink>
-                        <ResponsiveNavLink href={route('kordinators.index')} active={route().current('kordinators.*')}>Kordinator</ResponsiveNavLink>
-                        <ResponsiveNavLink href={route('pengawas.index')} active={route().current('pengawas.*')}>Pengawas</ResponsiveNavLink>
-                        <ResponsiveNavLink href={route('petugas.index')} active={route().current('petugas.*')}>Petugas</ResponsiveNavLink>
-                        <ResponsiveNavLink href={route('users.index')} active={route().current('users.*')}>User</ResponsiveNavLink>
-                        <ResponsiveNavLink href={route('roles.index')} active={route().current('roles.*')}>Role</ResponsiveNavLink>
-                        <ResponsiveNavLink href={route('import.index')} active={route().current('import.*')}>Import</ResponsiveNavLink>
+                        {hasPermission('view dashboard') && (
+                            <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')}>Dashboard</ResponsiveNavLink>
+                        )}
+                        {hasPermission('view lokasi') && (
+                            <ResponsiveNavLink href={route('lokasi.index')} active={route().current('lokasi.*')}>Lokasi</ResponsiveNavLink>
+                        )}
+                        {(hasPermission('view ulasan') || user?.roles?.includes('kordinator')) && (
+                            <ResponsiveNavLink href={route('ulasan.index')} active={route().current('ulasan.*')}>Ulasan</ResponsiveNavLink>
+                        )}
+                        {hasPermission('view kordinators') && (
+                            <ResponsiveNavLink href={route('kordinators.index')} active={route().current('kordinators.*')}>Kordinator</ResponsiveNavLink>
+                        )}
+                        {hasPermission('view pengawas') && (
+                            <ResponsiveNavLink href={route('pengawas.index')} active={route().current('pengawas.*')}>Pengawas</ResponsiveNavLink>
+                        )}
+                        {hasPermission('view petugas') && (
+                            <ResponsiveNavLink href={route('petugas.index')} active={route().current('petugas.*')}>Petugas</ResponsiveNavLink>
+                        )}
+                        {hasPermission('view users') && (
+                            <ResponsiveNavLink href={route('users.index')} active={route().current('users.*')}>User</ResponsiveNavLink>
+                        )}
+                        {hasPermission('view roles') && (
+                            <ResponsiveNavLink href={route('roles.index')} active={route().current('roles.*')}>Role</ResponsiveNavLink>
+                        )}
+                        {hasPermission('view import') && (
+                            <ResponsiveNavLink href={route('import.index')} active={route().current('import.*')}>Import</ResponsiveNavLink>
+                        )}
                     </div>
 
                     <div className="border-t border-slate-100 pb-1 pt-4">

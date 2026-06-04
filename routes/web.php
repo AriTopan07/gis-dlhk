@@ -30,6 +30,12 @@ Route::middleware('auth')->group(function () {
     Route::resource('pengawas', App\Http\Controllers\PengawasController::class)->parameters(['pengawas' => 'pengawas']);
     Route::resource('petugas', App\Http\Controllers\PetugasController::class)->parameters(['petugas' => 'petugas']);
     Route::get('/petugas/template/download', [App\Http\Controllers\PetugasController::class, 'downloadTemplate'])->name('petugas.template');
+    
+    // Ulasan (Reviews)
+    Route::get('/ulasan', [App\Http\Controllers\UlasanController::class, 'index'])->name('ulasan.index');
+    Route::post('/ulasan', [App\Http\Controllers\UlasanController::class, 'store'])->name('ulasan.store');
+    Route::put('/ulasan/{ulasan}', [App\Http\Controllers\UlasanController::class, 'update'])->name('ulasan.update');
+    Route::delete('/ulasan/{ulasan}', [App\Http\Controllers\UlasanController::class, 'destroy'])->name('ulasan.destroy');
 
     // Import Data Hierarki
     Route::get('/import', [App\Http\Controllers\ImportController::class, 'index'])->name('import.index');

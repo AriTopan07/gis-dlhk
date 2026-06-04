@@ -31,4 +31,9 @@ class Lokasi extends Model
     {
         return $this->belongsTo(Pengawas::class, 'pengawas_id');
     }
+
+    public function ulasan(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Ulasan::class);
+    }
 }

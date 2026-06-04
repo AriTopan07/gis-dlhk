@@ -12,30 +12,59 @@ class LokasiController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
+        $user = auth()->user();
+        $isKordinator = $user->hasRole('kordinator');
+        $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
 
-        $lokasis = Lokasi::with('pengawas')->when($search, function ($query, $search) {
-            return $query->where('lokasi', 'like', "%{$search}%");
-        })
+        $lokasis = Lokasi::with('pengawas')
+            ->when($isKordinator, function ($query) use ($kordinatorId) {
+                return $query->whereHas('pengawas', function ($q) use ($kordinatorId) {
+                    $q->where('kordinator_id', $kordinatorId);
+                });
+            })
+            ->when($search, function ($query, $search) {
+                return $query->where('lokasi', 'like', "%{$search}%");
+            })
             ->orderBy('created_at', 'desc')
             ->paginate(10)
             ->withQueryString();
 
+        $pengawasQuery = Pengawas::query();
+        if ($isKordinator) {
+            $pengawasQuery->where('kordinator_id', $kordinatorId);
+        }
+        $pengawas = $pengawasQuery->orderBy('nama')->get(['id', 'nama']);
+
         return Inertia::render('Lokasi/Index', [
             'lokasis'    => $lokasis,
             'filters'    => $request->only(['search']),
-            'pengawas'   => Pengawas::orderBy('nama')->get(['id', 'nama']),
+            'pengawas'   => $pengawas,
         ]);
     }
 
     public function create()
     {
+        $user = auth()->user();
+        $isKordinator = $user->hasRole('kordinator');
+        $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
+
+        $pengawasQuery = Pengawas::withExists('lokasi');
+        if ($isKordinator) {
+            $pengawasQuery->where('kordinator_id', $kordinatorId);
+        }
+        $pengawas = $pengawasQuery->orderBy('nama')->get(['id', 'nama']);
+
         return Inertia::render('Lokasi/Create', [
-            'pengawas' => Pengawas::withExists('lokasi')->orderBy('nama')->get(['id', 'nama']),
+            'pengawas' => $pengawas,
         ]);
     }
 
     public function store(Request $request)
     {
+        $user = auth()->user();
+        $isKordinator = $user->hasRole('kordinator');
+        $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
+
         $validated = $request->validate([
             'lokasis'              => 'required|array',
             'lokasis.*.lokasi'     => 'required|string',
@@ -47,6 +76,13 @@ class LokasiController extends Controller
         ]);
 
         foreach ($validated['lokasis'] as $item) {
+            if (!empty($item['pengawas_id'])) {
+                $pengawas = Pengawas::find($item['pengawas_id']);
+                if ($isKordinator && (!$pengawas || $pengawas->kordinator_id !== $kordinatorId)) {
+                    abort(403, 'Unauthorized.');
+                }
+            }
+
             Lokasi::create([
                 'lokasi'        => $item['lokasi'],
                 'type'          => $item['type'] ?? 'point',
@@ -62,14 +98,36 @@ class LokasiController extends Controller
 
     public function edit(Lokasi $lokasi)
     {
+        $user = auth()->user();
+        $isKordinator = $user->hasRole('kordinator');
+        $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
+
+        if ($isKordinator && $lokasi->pengawas?->kordinator_id !== $kordinatorId) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $pengawasQuery = Pengawas::withExists('lokasi');
+        if ($isKordinator) {
+            $pengawasQuery->where('kordinator_id', $kordinatorId);
+        }
+        $pengawas = $pengawasQuery->orderBy('nama')->get(['id', 'nama']);
+
         return Inertia::render('Lokasi/Edit', [
             'lokasi'      => $lokasi,
-            'pengawas'    => Pengawas::withExists('lokasi')->orderBy('nama')->get(['id', 'nama']),
+            'pengawas'    => $pengawas,
         ]);
     }
 
     public function update(Request $request, Lokasi $lokasi)
     {
+        $user = auth()->user();
+        $isKordinator = $user->hasRole('kordinator');
+        $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
+
+        if ($isKordinator && $lokasi->pengawas?->kordinator_id !== $kordinatorId) {
+            abort(403, 'Unauthorized.');
+        }
+
         $validated = $request->validate([
             'lokasi'        => 'required|string',
             'latitude'      => 'nullable|string',
@@ -79,6 +137,13 @@ class LokasiController extends Controller
             'pengawas_id'   => 'nullable|uuid|exists:pengawas,id',
         ]);
 
+        if ($isKordinator && !empty($validated['pengawas_id'])) {
+            $pengawas = Pengawas::find($validated['pengawas_id']);
+            if (!$pengawas || $pengawas->kordinator_id !== $kordinatorId) {
+                abort(403, 'Unauthorized.');
+            }
+        }
+
         $lokasi->update($validated);
 
         return redirect()->route('lokasi.index')->with('message', 'Lokasi berhasil diperbarui.');
@@ -86,6 +151,14 @@ class LokasiController extends Controller
 
     public function destroy(Lokasi $lokasi)
     {
+        $user = auth()->user();
+        $isKordinator = $user->hasRole('kordinator');
+        $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
+
+        if ($isKordinator && $lokasi->pengawas?->kordinator_id !== $kordinatorId) {
+            abort(403, 'Unauthorized.');
+        }
+
         $lokasi->delete();
         return redirect()->route('lokasi.index')->with('message', 'Lokasi berhasil dihapus.');
     }

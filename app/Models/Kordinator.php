@@ -23,4 +23,9 @@ class Kordinator extends Model
     {
         return $this->hasMany(Pengawas::class);
     }
+
+    public function ulasan(): HasMany
+    {
+        return $this->hasMany(Ulasan::class);
+    }
 }

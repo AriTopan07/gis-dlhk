@@ -26,6 +26,9 @@ const Icons = {
     ),
     Refresh: () => (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+    ),
+    Target: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/></svg>
     )
 };
 
@@ -213,6 +216,44 @@ const MapComponent = ({ selectedKecamatan, onReset }) => {
     // New: Auto-fit to Kabupaten on load
     const mapRef = useRef();
     const [hasFitted, setHasFitted] = useState(false);
+    
+    // Live Location states
+    const [userLocation, setUserLocation] = useState(null);
+    const [isTracking, setIsTracking] = useState(false);
+
+    const locateUser = () => {
+        if (!navigator.geolocation) {
+            console.warn('Geolocation is not supported by your browser');
+            return;
+        }
+
+        setIsTracking(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                setUserLocation([latitude, longitude]);
+                if (mapRef.current) {
+                    mapRef.current.flyTo([latitude, longitude], 15, {
+                        animate: true,
+                        duration: 1.5
+                    });
+                }
+                setIsTracking(false);
+            },
+            (error) => {
+                console.warn("User location not available or denied:", error);
+                setIsTracking(false);
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+    };
+
+    useEffect(() => {
+        // Automatically request location when map component mounts
+        locateUser();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     useEffect(() => {
         if (kabupatenData && kabupatenData.features.length > 0 && !hasFitted && mapRef.current) {
             const layer = L.geoJSON(kabupatenData);
@@ -535,8 +576,35 @@ const MapComponent = ({ selectedKecamatan, onReset }) => {
                     return null;
                 })}
 
+                {/* User Live Location Marker */}
+                {userLocation && (
+                    <Marker 
+                        position={userLocation}
+                        icon={L.divIcon({
+                            className: 'custom-div-icon',
+                            html: `
+                                <div class="relative flex h-6 w-6 items-center justify-center -ml-3 -mt-3">
+                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                  <span class="relative inline-flex rounded-full h-4 w-4 bg-blue-500 border-2 border-white shadow-md"></span>
+                                </div>
+                            `,
+                            iconSize: [24, 24],
+                            iconAnchor: [12, 12],
+                        })}
+                    >
+                        <Popup>Lokasi Anda Saat Ini</Popup>
+                    </Marker>
+                )}
+
                 {/* Custom Zoom Control */}
                 <div className="absolute bottom-10 right-10 z-[1000] flex flex-col gap-2">
+                    <button 
+                        onClick={locateUser}
+                        title="Live Location"
+                        className={`w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center font-bold transition-colors mb-2 ${isTracking ? 'text-blue-500 animate-pulse' : 'text-gray-700 hover:bg-gray-50'}`}
+                    >
+                        <Icons.Target />
+                    </button>
                     <button 
                         onClick={handleLocalReset}
                         title="Reset Map & Filter"
