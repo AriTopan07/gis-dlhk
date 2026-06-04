@@ -61,18 +61,6 @@ class RolePermissionSeeder extends Seeder
             'view ulasan',
         ]);
 
-        // Pengawas → view saja, lebih terbatas
-        $pengawas->syncPermissions([
-            'view dashboard',
-            'view lokasi',
-            'view petugas',
-            'view ulasan',
-        ]);
-
-        // Tenaga Kebersihan → minimal
-        $petugas->syncPermissions([
-            'view dashboard',
-        ]);
 
         // ── DEFAULT SUPERADMIN USER ──────────────────────────────
         $admin = User::firstOrCreate(
