@@ -12,13 +12,20 @@ class Ulasan extends Model
     use HasUuids;
 
     protected $fillable = [
+        'user_id',
         'kordinator_id',
         'lokasi_id',
         'tanggal',
         'rating',
         'komentar',
+        'foto',
         'status',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
 
     public function kordinator(): BelongsTo
     {

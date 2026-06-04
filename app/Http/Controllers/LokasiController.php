@@ -167,7 +167,14 @@ class LokasiController extends Controller
     {
         $lokasis = Lokasi::whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->get(['id', 'lokasi', 'type', 'latitude', 'longitude', 'path']);
+            ->withCount('ulasan')
+            ->withAvg('ulasan', 'rating')
+            ->get(['id', 'lokasi', 'type', 'latitude', 'longitude', 'path'])
+            ->map(function ($lokasi) {
+                $lokasi->ulasan_avg = $lokasi->ulasan_avg_rating ? round($lokasi->ulasan_avg_rating, 1) : 0;
+                $lokasi->ulasan_total = $lokasi->ulasan_count;
+                return $lokasi;
+            });
 
         return response()->json($lokasis);
     }

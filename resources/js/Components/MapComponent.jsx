@@ -492,6 +492,21 @@ const MapComponent = ({ selectedKecamatan, onReset }) => {
                                             {marker.lokasi}
                                         </div>
 
+                                        {/* Rating & Total Ulasan */}
+                                        <div className="flex items-center gap-3 mb-3 bg-amber-50 rounded-lg px-3 py-2 border border-amber-100">
+                                            <div className="flex items-center gap-0.5">
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                    <svg key={star} xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                                        fill={star <= Math.round(marker.ulasan_avg || 0) ? "#F59E0B" : "#E2E8F0"}
+                                                        stroke={star <= Math.round(marker.ulasan_avg || 0) ? "#F59E0B" : "#CBD5E1"}
+                                                        strokeWidth="1.5">
+                                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                                    </svg>
+                                                ))}
+                                            </div>
+                                            <span className="text-sm font-bold text-amber-600">{marker.ulasan_avg || 0}</span>
+                                            <span className="text-[11px] text-slate-400">({marker.ulasan_total || 0} ulasan)</span>
+                                        </div>
                                         <div className="text-sm bg-slate-50 rounded-xl border border-slate-100 overflow-hidden transition-all duration-300">
                                             <div className="p-2 border-t border-slate-100 flex justify-center bg-white">
                                                 <button 

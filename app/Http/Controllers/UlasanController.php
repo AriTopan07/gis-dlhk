@@ -9,7 +9,7 @@ class UlasanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Ulasan::with(['kordinator.user', 'lokasi'])
+        $query = \App\Models\Ulasan::with(['user', 'kordinator.user', 'lokasi'])
             ->orderBy('created_at', 'desc');
 
         // Filter: Search (by name, komentar, or lokasi)
@@ -59,7 +59,7 @@ class UlasanController extends Controller
 
         // Pagination
         $ulasans = $query->paginate(12)->through(function ($ulasan) {
-            $nama = $ulasan->kordinator->user->name ?? $ulasan->kordinator->nama ?? 'Unknown';
+            $nama = $ulasan->user->name ?? $ulasan->kordinator->user->name ?? $ulasan->kordinator->nama ?? 'Unknown';
             return [
                 'id' => $ulasan->id,
                 'nama' => $nama,
@@ -88,24 +88,30 @@ class UlasanController extends Controller
             'lokasi_id' => 'required|exists:lokasis,id',
             'rating' => 'required|integer|min:1|max:5',
             'komentar' => 'nullable|string',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:1024',
         ]);
 
         $user = auth()->user();
-        if (!$user->hasRole('kordinator')) {
-            return redirect()->back()->with('error', 'Hanya kordinator yang dapat memberikan ulasan.');
+        if (!$user->hasRole(['superadmin', 'admin', 'kordinator'])) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk memberikan ulasan.');
         }
 
+        // Find kordinator record if user is a kordinator
         $kordinator = \App\Models\Kordinator::where('user_id', $user->id)->first();
-        if (!$kordinator) {
-            return redirect()->back()->with('error', 'Data kordinator tidak ditemukan.');
+
+        $fotoPath = null;
+        if ($request->hasFile('foto')) {
+            $fotoPath = $request->file('foto')->store('ulasan', 'public');
         }
 
         \App\Models\Ulasan::create([
-            'kordinator_id' => $kordinator->id,
+            'user_id' => $user->id,
+            'kordinator_id' => $kordinator?->id,
             'lokasi_id' => $request->lokasi_id,
             'tanggal' => now()->toDateString(),
             'rating' => $request->rating,
             'komentar' => $request->komentar,
+            'foto' => $fotoPath,
             'status' => 'disetujui',
         ]);
 

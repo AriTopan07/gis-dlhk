@@ -15,7 +15,12 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    $user = auth()->user();
+    $canReview = $user->hasRole(['superadmin', 'admin', 'kordinator']);
+
+    return Inertia::render('Dashboard', [
+        'canReview' => $canReview,
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
