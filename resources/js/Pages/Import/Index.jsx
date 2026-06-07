@@ -129,7 +129,8 @@ export default function Index() {
                                     </button>
                                     <button
                                         onClick={handleProcess}
-                                        className="inline-flex items-center gap-2 justify-center rounded-xl border border-transparent bg-[#047857] px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-[#065f46] shadow-sm"
+                                        disabled={previewData.some(row => row.is_error)}
+                                        className={`inline-flex items-center gap-2 justify-center rounded-xl border border-transparent px-6 py-2.5 text-sm font-bold text-white transition-all shadow-sm ${previewData.some(row => row.is_error) ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#047857] hover:bg-[#065f46]'}`}
                                     >
                                         <IconDeviceFloppy size={18} stroke={2} />
                                         Konfirmasi & Simpan
@@ -147,6 +148,8 @@ export default function Index() {
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Pengawas</th>
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">NIP Pengawas</th>
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Petugas</th>
+                                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">NIK Petugas</th>
+                                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">NIP Petugas</th>
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                                         </tr>
                                     </thead>
@@ -159,6 +162,8 @@ export default function Index() {
                                                 <td className="px-4 py-3 text-slate-800">{row.pengawas || <span className="text-slate-300 italic">-</span>}</td>
                                                 <td className="px-4 py-3 text-slate-600">{row.nip_pengawas || <span className="text-slate-300 italic">-</span>}</td>
                                                 <td className="px-4 py-3 text-slate-800">{row.petugas || <span className="text-slate-300 italic">-</span>}</td>
+                                                <td className="px-4 py-3 text-slate-600">{row.nik_petugas || <span className="text-slate-300 italic">-</span>}</td>
+                                                <td className="px-4 py-3 text-slate-600">{row.nip_petugas || <span className="text-slate-300 italic">-</span>}</td>
                                                 <td className="px-4 py-3">
                                                     {row.is_error ? (
                                                         <span className="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-md">
@@ -178,7 +183,7 @@ export default function Index() {
                                         ))}
                                         {previewData.length === 0 && (
                                             <tr>
-                                                <td colSpan="7" className="px-4 py-8 text-center text-slate-500">
+                                                <td colSpan="9" className="px-4 py-8 text-center text-slate-500">
                                                     Tidak ada data yang terbaca (mulai dari baris ke-5).
                                                 </td>
                                             </tr>

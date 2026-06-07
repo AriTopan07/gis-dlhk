@@ -146,6 +146,20 @@ class HierarkiSheetImport extends StringValueBinder implements ToCollection, Wit
                         continue;
                     }
 
+                    if ($nikKtpPetugas && Petugas::where('nik_ktp', $nikKtpPetugas)->exists()) {
+                        $this->addResult($rowNum, 'error', "Baris $rowNum: NIK Petugas '$nikKtpPetugas' sudah terdaftar.");
+                        $this->skipped++;
+                        DB::rollBack();
+                        continue;
+                    }
+
+                    if ($nipPetugas && Petugas::where('nip', $nipPetugas)->exists()) {
+                        $this->addResult($rowNum, 'error', "Baris $rowNum: NIP Petugas '$nipPetugas' sudah terdaftar.");
+                        $this->skipped++;
+                        DB::rollBack();
+                        continue;
+                    }
+
                     Petugas::create([
                         'nama'        => $namaPetugas,
                         'pengawas_id' => $this->lastPengawas->id,

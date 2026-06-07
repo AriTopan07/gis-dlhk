@@ -76,6 +76,27 @@ class ImportController extends Controller
                         }
                     }
                 }
+                
+                if ($nipPengawas) {
+                    $pengawasByNip = \App\Models\Pengawas::where('nip', $nipPengawas)->first();
+                    if ($pengawasByNip) {
+                        $errors[] = "(Info) NIP Pengawas terdaftar, akan ditautkan.";
+                    }
+                }
+
+                if ($nikKtpPetugas) {
+                    $petugasByNik = \App\Models\Petugas::where('nik_ktp', $nikKtpPetugas)->first();
+                    if ($petugasByNik) {
+                        $errors[] = "NIK Petugas sudah terdaftar";
+                    }
+                }
+
+                if ($nipPetugas) {
+                    $petugasByNip = \App\Models\Petugas::where('nip', $nipPetugas)->first();
+                    if ($petugasByNip) {
+                        $errors[] = "NIP Petugas sudah terdaftar";
+                    }
+                }
 
                 $previewData[] = [
                     'row'        => $rowNum,
