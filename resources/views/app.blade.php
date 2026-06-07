@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        
+        <link rel="icon" type="image/webp" href="/img/logo-sidoarjo.webp">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
