@@ -50,9 +50,10 @@ class ImportController extends Controller
                 $emailKordinator = trim($row[2] ?? '');
                 $passKordinator  = trim($row[3] ?? '');
                 $namaPengawas    = trim($row[4] ?? '');
-                $namaPetugas     = trim($row[5] ?? '');
-                $nikKtpPetugas   = trim($row[6] ?? '');
-                $nipPetugas      = trim($row[7] ?? '');
+                $nipPengawas     = trim($row[5] ?? '');
+                $namaPetugas     = trim($row[6] ?? '');
+                $nikKtpPetugas   = trim($row[7] ?? '');
+                $nipPetugas      = trim($row[8] ?? '');
 
                 if (!$namaKordinator && !$namaPengawas && !$namaPetugas) {
                     continue; // Skip baris kosong
@@ -81,6 +82,7 @@ class ImportController extends Controller
                     'kordinator' => $namaKordinator,
                     'nip_kord'   => $nipKordinator,
                     'pengawas'   => $namaPengawas,
+                    'nip_pengawas'=> $nipPengawas,
                     'petugas'    => $namaPetugas,
                     'nik_petugas'=> $nikKtpPetugas,
                     'nip_petugas'=> $nipPetugas,

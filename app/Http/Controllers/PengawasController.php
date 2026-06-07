@@ -72,6 +72,7 @@ class PengawasController extends Controller
 
         $request->validate([
             'nama' => 'required|string|max:255',
+            'nip'  => 'nullable|string|max:255',
             'kordinator_id' => 'required|uuid|exists:kordinators,id',
         ]);
 
@@ -118,6 +119,7 @@ class PengawasController extends Controller
 
         $request->validate([
             'nama' => 'required|string|max:255',
+            'nip'  => 'nullable|string|max:255',
             'kordinator_id' => 'required|uuid|exists:kordinators,id',
         ]);
 

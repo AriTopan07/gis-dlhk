@@ -145,6 +145,7 @@ export default function Index() {
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Kordinator</th>
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">NIP Kord</th>
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Pengawas</th>
+                                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">NIP Pengawas</th>
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Petugas</th>
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                                         </tr>
@@ -156,6 +157,7 @@ export default function Index() {
                                                 <td className="px-4 py-3 text-slate-800">{row.kordinator || <span className="text-slate-300 italic">-</span>}</td>
                                                 <td className="px-4 py-3 text-slate-600">{row.nip_kord || <span className="text-slate-300 italic">-</span>}</td>
                                                 <td className="px-4 py-3 text-slate-800">{row.pengawas || <span className="text-slate-300 italic">-</span>}</td>
+                                                <td className="px-4 py-3 text-slate-600">{row.nip_pengawas || <span className="text-slate-300 italic">-</span>}</td>
                                                 <td className="px-4 py-3 text-slate-800">{row.petugas || <span className="text-slate-300 italic">-</span>}</td>
                                                 <td className="px-4 py-3">
                                                     {row.is_error ? (
@@ -176,7 +178,7 @@ export default function Index() {
                                         ))}
                                         {previewData.length === 0 && (
                                             <tr>
-                                                <td colSpan="6" className="px-4 py-8 text-center text-slate-500">
+                                                <td colSpan="7" className="px-4 py-8 text-center text-slate-500">
                                                     Tidak ada data yang terbaca (mulai dari baris ke-5).
                                                 </td>
                                             </tr>

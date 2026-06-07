@@ -43,7 +43,7 @@ export default function Index({ pengawas, kordinators, filters }) {
 
     // ── CREATE ────────────────────────────────────────────────
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const createForm = useForm({ nama: '', kordinator_id: '' });
+    const createForm = useForm({ nama: '', nip: '', kordinator_id: '' });
 
     const openCreateModal = () => setIsCreateModalOpen(true);
     const closeCreateModal = () => { setIsCreateModalOpen(false); createForm.reset(); createForm.clearErrors(); };
@@ -55,12 +55,13 @@ export default function Index({ pengawas, kordinators, filters }) {
     // ── EDIT ──────────────────────────────────────────────────
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingItem, setEditingItem]         = useState(null);
-    const editForm = useForm({ nama: '', kordinator_id: '' });
+    const editForm = useForm({ nama: '', nip: '', kordinator_id: '' });
 
     const openEditModal = (item) => {
         setEditingItem(item);
         editForm.setData({
             nama:          item.nama          || '',
+            nip:           item.nip           || '',
             kordinator_id: item.kordinator_id || '',
         });
         setIsEditModalOpen(true);
@@ -74,6 +75,7 @@ export default function Index({ pengawas, kordinators, filters }) {
     // ── TABLE ─────────────────────────────────────────────────
     const columns = [
         { label: 'Nama', key: 'nama' },
+        { label: 'NIP', key: 'nip', render: (n) => n || <span className="text-slate-400 italic text-xs">-</span> },
         {
             label: 'Kordinator',
             key: 'kordinator',
@@ -134,6 +136,13 @@ export default function Index({ pengawas, kordinators, filters }) {
                         </div>
 
                         <div>
+                            <InputLabel htmlFor="c_nip" value="NIP (Opsional)" />
+                            <TextInput id="c_nip" value={createForm.data.nip} className="mt-1 block w-full"
+                                onChange={(e) => createForm.setData('nip', e.target.value)} />
+                            <InputError message={createForm.errors.nip} className="mt-2" />
+                        </div>
+
+                        <div>
                             <InputLabel htmlFor="c_kordinator_id" value="Pilih Kordinator" />
                             <Select
                                 id="c_kordinator_id"
@@ -167,6 +176,13 @@ export default function Index({ pengawas, kordinators, filters }) {
                             <TextInput id="e_nama" value={editForm.data.nama} className="mt-1 block w-full"
                                 onChange={(e) => editForm.setData('nama', e.target.value)} required />
                             <InputError message={editForm.errors.nama} className="mt-2" />
+                        </div>
+
+                        <div>
+                            <InputLabel htmlFor="e_nip" value="NIP (Opsional)" />
+                            <TextInput id="e_nip" value={editForm.data.nip} className="mt-1 block w-full"
+                                onChange={(e) => editForm.setData('nip', e.target.value)} />
+                            <InputError message={editForm.errors.nip} className="mt-2" />
                         </div>
 
                         <div>

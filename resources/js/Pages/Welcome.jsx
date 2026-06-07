@@ -1,12 +1,127 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import React, { useState } from 'react';
 import Sidebar from '@/Components/Sidebar';
 import MapComponent from '@/Components/MapComponent';
+import Modal from '@/Components/Modal';
 
-export default function Welcome({ auth }) {
+// ── Icons ──────────────────────────────────────────────────
+const Icons = {
+    Star: ({ filled }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+            fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"
+            strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+    ),
+    Camera: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+            <circle cx="12" cy="13" r="3"/>
+        </svg>
+    ),
+    X: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+        </svg>
+    ),
+    MapPin: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+        </svg>
+    ),
+};
+
+const StarRating = ({ value, onChange, size = 'lg' }) => {
+    const [hover, setHover] = useState(0);
+    const sizeClass = size === 'lg' ? 'w-10 h-10' : 'w-6 h-6';
+
+    return (
+        <div className="flex gap-1 items-center">
+            {[1, 2, 3, 4, 5].map(star => (
+                <button
+                    key={star}
+                    type="button"
+                    onClick={() => onChange(star)}
+                    onMouseEnter={() => setHover(star)}
+                    onMouseLeave={() => setHover(0)}
+                    className={`${sizeClass} transition-all duration-200 ${
+                        star <= (hover || value)
+                            ? 'text-amber-400 scale-110'
+                            : 'text-slate-300 hover:text-amber-200'
+                    }`}
+                >
+                    <Icons.Star filled={star <= (hover || value)} />
+                </button>
+            ))}
+        </div>
+    );
+};
+
+export default function Welcome({ auth, canReview }) {
     const [selectedKecamatan, setSelectedKecamatan] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    // ── Review Modal States ─────────────────────────────────
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [selectedLokasi, setSelectedLokasi] = useState(null);
+    const [fotoPreview, setFotoPreview] = useState(null);
+
+    const { data, setData, post, processing, errors, reset } = useForm({
+        lokasi_id: '',
+        rating: 0,
+        komentar: '',
+        foto: null,
+    });
+
+    const openReviewModal = (marker) => {
+        setSelectedLokasi(marker);
+        setData('lokasi_id', marker.id);
+        setShowReviewModal(true);
+    };
+
+    const closeReviewModal = () => {
+        setShowReviewModal(false);
+        setSelectedLokasi(null);
+        setFotoPreview(null);
+        reset();
+    };
+
+    const handleFotoChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 1024 * 1024) {
+            alert('Ukuran file maksimal 1MB');
+            e.target.value = '';
+            return;
+        }
+
+        setData('foto', file);
+        const reader = new FileReader();
+        reader.onload = (ev) => setFotoPreview(ev.target.result);
+        reader.readAsDataURL(file);
+    };
+
+    const removeFoto = () => {
+        setData('foto', null);
+        setFotoPreview(null);
+    };
+
+    const submitReview = (e) => {
+        e.preventDefault();
+        post(route('ulasan.store'), {
+            forceFormData: true,
+            onSuccess: () => {
+                closeReviewModal();
+                // Optionally reload data or trigger a map refresh if needed
+                window.location.reload();
+            },
+        });
+    };
 
     const kecamatanList = [
         "Balongbendo", "Buduran", "Candi", "Gedangan", "Jabon", 
@@ -102,10 +217,130 @@ export default function Welcome({ auth }) {
                         <MapComponent 
                             selectedKecamatan={selectedKecamatan} 
                             onReset={handleReset}
+                            canReview={canReview}
+                            onOpenReview={openReviewModal}
                         />
                     </main>
                 </div>
             </div>
+
+            {/* ── Review Modal ──────────────────────────────────────── */}
+            <Modal show={showReviewModal} maxWidth="lg" onClose={closeReviewModal}>
+                <form onSubmit={submitReview} className="relative">
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-5">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-bold text-white">Berikan Ulasan</h3>
+                                {selectedLokasi && (
+                                    <div className="flex items-center gap-1.5 mt-1 text-emerald-100 text-sm">
+                                        <Icons.MapPin />
+                                        <span>{selectedLokasi.lokasi}</span>
+                                    </div>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeReviewModal}
+                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/20 text-white hover:bg-white/30 transition-colors"
+                            >
+                                <Icons.X />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Body */}
+                    <div className="px-6 py-5 space-y-5">
+                        {/* Rating */}
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Rating</label>
+                            <div className="flex items-center gap-4">
+                                <StarRating value={data.rating} onChange={(val) => setData('rating', val)} />
+                                {data.rating > 0 && (
+                                    <span className="text-sm font-bold text-amber-500">
+                                        {['', 'Sangat Buruk', 'Buruk', 'Cukup', 'Baik', 'Sangat Baik'][data.rating]}
+                                    </span>
+                                )}
+                            </div>
+                            {errors.rating && <p className="text-xs text-red-500 mt-1">{errors.rating}</p>}
+                        </div>
+
+                        {/* Komentar */}
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Komentar</label>
+                            <textarea
+                                value={data.komentar}
+                                onChange={(e) => setData('komentar', e.target.value)}
+                                placeholder="Tuliskan ulasan Anda tentang kondisi kebersihan lokasi ini..."
+                                rows={4}
+                                className="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-400 focus:ring-emerald-400 resize-none transition-colors"
+                            />
+                            {errors.komentar && <p className="text-xs text-red-500 mt-1">{errors.komentar}</p>}
+                        </div>
+
+                        {/* Foto Upload */}
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">
+                                Foto <span className="text-slate-400 font-normal">(opsional, maks. 1MB)</span>
+                            </label>
+
+                            {fotoPreview ? (
+                                <div className="relative rounded-xl overflow-hidden border border-slate-200 group">
+                                    <img
+                                        src={fotoPreview}
+                                        alt="Preview"
+                                        className="w-full h-48 object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <button
+                                            type="button"
+                                            onClick={removeFoto}
+                                            className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white text-sm font-bold rounded-xl hover:bg-red-600 transition-colors"
+                                        >
+                                            <Icons.X />
+                                            <span>Hapus Foto</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <label className="flex flex-col items-center justify-center h-36 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-all duration-200 group">
+                                    <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-emerald-500 transition-colors">
+                                        <Icons.Camera />
+                                        <span className="text-sm font-medium">Klik untuk upload foto</span>
+                                        <span className="text-xs text-slate-300">JPG, JPEG, PNG, WebP • Maks 1MB</span>
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/jpg,image/jpeg,image/png,image/webp"
+                                        onChange={handleFotoChange}
+                                        className="hidden"
+                                    />
+                                </label>
+                            )}
+                            {errors.foto && <p className="text-xs text-red-500 mt-1">{errors.foto}</p>}
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={closeReviewModal}
+                            className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={processing || data.rating === 0}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                            <span>Kirim Ulasan</span>
+                        </button>
+                    </div>
+                </form>
+            </Modal>
         </>
     );
 }

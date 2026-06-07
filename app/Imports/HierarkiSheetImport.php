@@ -44,9 +44,10 @@ class HierarkiSheetImport extends StringValueBinder implements ToCollection, Wit
             $emailKordinator = trim($r[2] ?? '');
             $passKordinator  = trim($r[3] ?? '');
             $namaPengawas    = trim($r[4] ?? '');
-            $namaPetugas     = trim($r[5] ?? '');
-            $nikKtpPetugas   = trim($r[6] ?? '');
-            $nipPetugas      = trim($r[7] ?? '');
+            $nipPengawas     = trim($r[5] ?? '');
+            $namaPetugas     = trim($r[6] ?? '');
+            $nikKtpPetugas   = trim($r[7] ?? '');
+            $nipPetugas      = trim($r[8] ?? '');
 
             // Lewati baris kosong total
             if (!$namaKordinator && !$namaPengawas && !$namaPetugas) {
@@ -123,6 +124,9 @@ class HierarkiSheetImport extends StringValueBinder implements ToCollection, Wit
                         [
                             'nama'          => $namaPengawas,
                             'kordinator_id' => $this->lastKordinator->id,
+                        ],
+                        [
+                            'nip'           => $nipPengawas ?: null,
                         ]
                     );
 

@@ -13,7 +13,7 @@ class Pengawas extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['kordinator_id', 'nama'];
+    protected $fillable = ['kordinator_id', 'nama', 'nip'];
 
     public function kordinator(): BelongsTo
     {

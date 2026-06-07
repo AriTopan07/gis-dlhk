@@ -90,13 +90,19 @@ export default function Login({ status, canResetPassword }) {
                         </label>
                     </div>
 
-                    <div className="pt-2">
+                    <div className="pt-2 flex flex-col gap-3">
                         <PrimaryButton 
-                            className="w-full" 
+                            className="w-full justify-center" 
                             disabled={processing}
                         >
                             Masuk
                         </PrimaryButton>
+                        <Link
+                            href="/"
+                            className="inline-flex w-full justify-center items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest text-slate-700 transition duration-150 ease-in-out hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#047857] focus:ring-offset-2"
+                        >
+                            Kembali
+                        </Link>
                     </div>
                 </div>
 

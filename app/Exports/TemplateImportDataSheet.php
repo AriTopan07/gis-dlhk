@@ -28,13 +28,13 @@ class TemplateImportDataSheet extends StringValueBinder implements FromArray, Wi
         $rows = [];
 
         // Baris 1: Judul utama
-        $rows[] = ['TEMPLATE IMPORT DATA HIERARKI - DLHK', '', '', '', '', ''];
+        $rows[] = ['TEMPLATE IMPORT DATA HIERARKI - DLHK', '', '', '', '', '', ''];
 
         // Baris 2: Sub-judul
-        $rows[] = ['Sistem Informasi Dinas Lingkungan Hidup dan Kebersihan Kabupaten Sidoarjo', '', '', '', '', ''];
+        $rows[] = ['Sistem Informasi Dinas Lingkungan Hidup dan Kebersihan Kabupaten Sidoarjo', '', '', '', '', '', ''];
 
         // Baris 3: Petunjuk singkat
-        $rows[] = ['PETUNJUK: Isi data di bawah mulai baris ke-5. Baris kosong pada kolom Kordinator/Pengawas = mengikuti baris sebelumnya. Lihat sheet PETUNJUK untuk panduan lengkap.', '', '', '', '', ''];
+        $rows[] = ['PETUNJUK: Isi data di bawah mulai baris ke-5. Baris kosong pada kolom Kordinator/Pengawas = mengikuti baris sebelumnya. Lihat sheet PETUNJUK untuk panduan lengkap.', '', '', '', '', '', ''];
 
         // Baris 4: Header kolom
         $rows[] = [
@@ -43,22 +43,23 @@ class TemplateImportDataSheet extends StringValueBinder implements FromArray, Wi
             'EMAIL KORDINATOR',
             'PASSWORD KORDINATOR',
             'NAMA PENGAWAS (MANDOR)',
+            'NIP PENGAWAS',
             'NAMA PETUGAS',
             'NIK KTP PETUGAS',
             'NIP PETUGAS',
         ];
 
         // Baris 5-6: Contoh pengisian
-        $rows[] = ['Andi Sumarno',     '198501012020011001', 'andi@dlhk.go.id', 'password123', 'Budi Santoso',   'Fatchul Muin',          '3515072211860001', '198611222025211088'];
-        $rows[] = ['',                  '',                   '',                '',             '',               'Ian Anugrish',          '3515811110190900002', '199001112025211122'];
-        $rows[] = ['',                  '',                   '',                '',             '',               'Camelia Novi Ika P.',   '3515084611890900003', ''];
-        $rows[] = ['',                  '',                   '',                '',             'Desi Ariani',    'Brilian Salsabina',     '3578014805030200012', '200303080252501012'];
-        $rows[] = ['Siti Rahayu',       '197803152019012002', 'siti@dlhk.go.id', 'password456', 'Ahmad Yusuf',    'Rian Maulana',          '3515011503850001',   ''];
-        $rows[] = ['',                  '',                   '',                '',             '',               'Wahyu Santoso',         '3515081209870002',   ''];
+        $rows[] = ['Andi Sumarno',     '198501012020011001', 'andi@dlhk.go.id', 'password123', 'Budi Santoso',   '198001012010011005', 'Fatchul Muin',          '3515072211860001', '198611222025211088'];
+        $rows[] = ['',                  '',                   '',                '',             '',               '',                   'Ian Anugrish',          '3515811110190900002', '199001112025211122'];
+        $rows[] = ['',                  '',                   '',                '',             '',               '',                   'Camelia Novi Ika P.',   '3515084611890900003', ''];
+        $rows[] = ['',                  '',                   '',                '',             'Desi Ariani',    '198205052015022003', 'Brilian Salsabina',     '3578014805030200012', '200303080252501012'];
+        $rows[] = ['Siti Rahayu',       '197803152019012002', 'siti@dlhk.go.id', 'password456', 'Ahmad Yusuf',    '198302022011031006', 'Rian Maulana',          '3515011503850001',   ''];
+        $rows[] = ['',                  '',                   '',                '',             '',               '',                   'Wahyu Santoso',         '3515081209870002',   ''];
 
         // 90 baris kosong untuk diisi
         for ($i = 0; $i < 90; $i++) {
-            $rows[] = ['', '', '', '', '', '', '', ''];
+            $rows[] = ['', '', '', '', '', '', '', '', ''];
         }
 
         return $rows;
@@ -67,9 +68,9 @@ class TemplateImportDataSheet extends StringValueBinder implements FromArray, Wi
     public function styles(Worksheet $sheet): array
     {
         // Merge judul
-        $sheet->mergeCells('A1:H1');
-        $sheet->mergeCells('A2:H2');
-        $sheet->mergeCells('A3:H3');
+        $sheet->mergeCells('A1:I1');
+        $sheet->mergeCells('A2:I2');
+        $sheet->mergeCells('A3:I3');
 
         // Tinggi baris
         $sheet->getRowDimension(1)->setRowHeight(30);
@@ -81,7 +82,7 @@ class TemplateImportDataSheet extends StringValueBinder implements FromArray, Wi
 
         // Shading baris contoh (5-10) – warna beda biru muda
         foreach (range(5, 10) as $r) {
-            $sheet->getStyle("A{$r}:H{$r}")->applyFromArray([
+            $sheet->getStyle("A{$r}:I{$r}")->applyFromArray([
                 'fill' => [
                     'fillType'   => Fill::FILL_SOLID,
                     'startColor' => ['rgb' => 'EFF6FF'],
@@ -138,9 +139,10 @@ class TemplateImportDataSheet extends StringValueBinder implements FromArray, Wi
             'C' => 28, // Email Kordinator
             'D' => 24, // Password Kordinator
             'E' => 30, // Nama Pengawas
-            'F' => 30, // Nama Petugas
-            'G' => 22, // NIK KTP Petugas
-            'H' => 22, // NIP Petugas
+            'F' => 24, // NIP Pengawas
+            'G' => 30, // Nama Petugas
+            'H' => 22, // NIK KTP Petugas
+            'I' => 22, // NIP Petugas
         ];
     }
 
@@ -148,8 +150,9 @@ class TemplateImportDataSheet extends StringValueBinder implements FromArray, Wi
     {
         return [
             'B' => NumberFormat::FORMAT_TEXT, // NIP Kordinator
-            'G' => NumberFormat::FORMAT_TEXT, // NIK KTP Petugas
-            'H' => NumberFormat::FORMAT_TEXT, // NIP Petugas
+            'F' => NumberFormat::FORMAT_TEXT, // NIP Pengawas
+            'H' => NumberFormat::FORMAT_TEXT, // NIK KTP Petugas
+            'I' => NumberFormat::FORMAT_TEXT, // NIP Petugas
         ];
     }
 }

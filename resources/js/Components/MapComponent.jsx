@@ -55,7 +55,7 @@ const ChangeView = ({ center, zoom }) => {
     return null;
 };
 
-const MapComponent = ({ selectedKecamatan, onReset }) => {
+const MapComponent = ({ selectedKecamatan, onReset, canReview = false, onOpenReview }) => {
     const [kabupatenData, setKabupatenData] = useState(null);
     const [kecamatanData, setKecamatanData] = useState(null);
     const [desaData, setDesaData] = useState(null);
@@ -562,6 +562,22 @@ const MapComponent = ({ selectedKecamatan, onReset }) => {
                                             )}
                                         </div>
 
+                                        {canReview && (
+                                            <div className="mt-3 pt-2 border-t border-slate-100">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                        if (onOpenReview) onOpenReview(marker);
+                                                    }}
+                                                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-bold rounded-xl transition-all duration-200 shadow-md shadow-emerald-100 hover:shadow-lg hover:shadow-emerald-200"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                                    <span>Berikan Ulasan</span>
+                                                </button>
+                                            </div>
+                                        )}
+
                                         <div className="mt-3 pt-2 border-t border-slate-50 flex justify-between items-center text-[10px] text-slate-400">
                                             <span>Sidoarjo Geoportal</span>
                                             <span>DLHK Kab. Sidoarjo</span>
@@ -685,6 +701,18 @@ const MapComponent = ({ selectedKecamatan, onReset }) => {
                 </div>
             </div>
 
+            {/* Review Badge */}
+            {canReview && (
+                <div className="absolute top-6 left-6 z-[1000] pointer-events-none">
+                    <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-emerald-100 px-5 py-3 flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
+                        <div>
+                            <p className="text-xs font-bold text-slate-800">Mode Ulasan</p>
+                            <p className="text-[10px] text-slate-400">Klik marker untuk memberi ulasan</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     );
