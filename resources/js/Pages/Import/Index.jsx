@@ -129,8 +129,7 @@ export default function Index() {
                                     </button>
                                     <button
                                         onClick={handleProcess}
-                                        disabled={previewData.some(row => row.is_error)}
-                                        className={`inline-flex items-center gap-2 justify-center rounded-xl border border-transparent px-6 py-2.5 text-sm font-bold text-white transition-all shadow-sm ${previewData.some(row => row.is_error) ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#047857] hover:bg-[#065f46]'}`}
+                                        className="inline-flex items-center gap-2 justify-center rounded-xl border border-transparent bg-[#047857] px-6 py-2.5 text-sm font-bold text-white transition-all shadow-sm hover:bg-[#065f46]"
                                     >
                                         <IconDeviceFloppy size={18} stroke={2} />
                                         Konfirmasi & Simpan

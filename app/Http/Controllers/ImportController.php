@@ -87,14 +87,14 @@ class ImportController extends Controller
                 if ($nikKtpPetugas) {
                     $petugasByNik = \App\Models\Petugas::where('nik_ktp', $nikKtpPetugas)->first();
                     if ($petugasByNik) {
-                        $errors[] = "NIK Petugas sudah terdaftar";
+                        $errors[] = "(Skip) NIK Petugas sudah terdaftar";
                     }
                 }
 
                 if ($nipPetugas) {
                     $petugasByNip = \App\Models\Petugas::where('nip', $nipPetugas)->first();
                     if ($petugasByNip) {
-                        $errors[] = "NIP Petugas sudah terdaftar";
+                        $errors[] = "(Skip) NIP Petugas sudah terdaftar";
                     }
                 }
 
@@ -108,7 +108,7 @@ class ImportController extends Controller
                     'nik_petugas'=> $nikKtpPetugas,
                     'nip_petugas'=> $nipPetugas,
                     'status'     => count($errors) > 0 ? implode(', ', $errors) : 'Valid',
-                    'is_error'   => count($errors) > 0 && strpos($errors[0], '(Info)') === false,
+                    'is_error'   => count($errors) > 0 && strpos($errors[0], '(Info)') === false && strpos($errors[0], '(Skip)') === false,
                 ];
             }
 
