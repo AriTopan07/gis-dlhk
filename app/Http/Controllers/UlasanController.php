@@ -66,6 +66,7 @@ class UlasanController extends Controller
                 'avatar' => 'https://ui-avatars.com/api/?name=' . urlencode($nama) . '&background=random',
                 'rating' => $ulasan->rating,
                 'komentar' => $ulasan->komentar,
+                'foto' => $ulasan->foto ? asset('storage/' . $ulasan->foto) : null,
                 'lokasi' => $ulasan->lokasi->lokasi ?? 'Unknown',
                 'tanggal' => \Carbon\Carbon::parse($ulasan->tanggal)->translatedFormat('d F Y'),
                 'status' => $ulasan->status,

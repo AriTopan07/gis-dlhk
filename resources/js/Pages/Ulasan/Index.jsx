@@ -13,7 +13,8 @@ import {
     IconThumbUp, 
     IconAlertCircle,
     IconFilter,
-    IconPlus
+    IconPlus,
+    IconPhoto
 } from '@tabler/icons-react';
 
 import Pagination from '@/Components/Pagination';
@@ -29,6 +30,7 @@ export default function Index({ ulasans: initialUlasans, lokasis, stats, filters
     const [selectedStatus, setSelectedStatus] = useState(filters?.status || 'all');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedPhoto, setSelectedPhoto] = useState(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         lokasi_id: '',
@@ -286,9 +288,22 @@ export default function Index({ ulasans: initialUlasans, lokasis, stats, filters
                                         </div>
 
                                         {/* Location Tag */}
-                                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-2xl bg-slate-50 border border-slate-100 text-xs font-semibold text-slate-600">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
-                                            {ulasan.lokasi}
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-2xl bg-slate-50 border border-slate-100 text-xs font-semibold text-slate-600">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+                                                {ulasan.lokasi}
+                                            </div>
+
+                                            {ulasan.foto && (
+                                                <button 
+                                                    onClick={() => setSelectedPhoto(ulasan.foto)}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-2xl bg-blue-50 border border-blue-100 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors"
+                                                    title="Lihat Foto"
+                                                >
+                                                    <IconPhoto size={14} />
+                                                    Foto
+                                                </button>
+                                            )}
                                         </div>
 
                                         {/* Stars */}
@@ -330,6 +345,27 @@ export default function Index({ ulasans: initialUlasans, lokasis, stats, filters
 
                 </div>
             </div>
+
+            {/* Modal View Foto */}
+            <Modal show={!!selectedPhoto} onClose={() => setSelectedPhoto(null)} maxWidth="2xl">
+                <div className="p-4 sm:p-6 bg-white rounded-[2rem] relative flex flex-col items-center justify-center min-h-[50vh]">
+                    <button 
+                        onClick={() => setSelectedPhoto(null)}
+                        className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors bg-slate-100 hover:bg-slate-200 rounded-full p-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    {selectedPhoto && (
+                        <img 
+                            src={selectedPhoto} 
+                            alt="Foto Ulasan" 
+                            className="max-w-full max-h-[80vh] object-contain rounded-xl mt-4"
+                        />
+                    )}
+                </div>
+            </Modal>
 
             {/* Modal Tambah Ulasan */}
             <Modal show={isModalOpen} onClose={closeModal} maxWidth="md">
