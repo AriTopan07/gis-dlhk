@@ -16,7 +16,7 @@ export default function Index({ petugas, pengawas_list, kordinator_list, filters
 
     // ── CREATE ───────────────────────────────────────────────
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const createForm = useForm({ nama: '', pengawas_id: '', nik_ktp: '', nip: '' });
+    const createForm = useForm({ nama: '', pengawas_id: '', nik_ktp: '', nip: '', shift: '' });
 
     const openCreateModal = () => setIsCreateModalOpen(true);
     const closeCreateModal = () => { setIsCreateModalOpen(false); createForm.reset(); createForm.clearErrors(); };
@@ -28,7 +28,7 @@ export default function Index({ petugas, pengawas_list, kordinator_list, filters
     // ── EDIT ─────────────────────────────────────────────────
     const [isEditModalOpen, setIsEditModalOpen]   = useState(false);
     const [editingPetugas, setEditingPetugas]     = useState(null);
-    const editForm = useForm({ nama: '', pengawas_id: '', nik_ktp: '', nip: '' });
+    const editForm = useForm({ nama: '', pengawas_id: '', nik_ktp: '', nip: '', shift: '' });
 
     const openEditModal = (item) => {
         setEditingPetugas(item);
@@ -37,6 +37,7 @@ export default function Index({ petugas, pengawas_list, kordinator_list, filters
             pengawas_id: item.pengawas_id || '',
             nik_ktp:     item.nik_ktp     || '',
             nip:         item.nip         || '',
+            shift:       item.shift       || '',
         });
         setIsEditModalOpen(true);
     };
@@ -46,11 +47,25 @@ export default function Index({ petugas, pengawas_list, kordinator_list, filters
         editForm.patch(route('petugas.update', editingPetugas.id), { onSuccess: () => closeEditModal() });
     };
 
+    const shiftOptions = [
+        { value: 'pagi',   label: '🌅 Pagi' },
+        { value: 'siang',  label: '☀️ Siang' },
+        { value: 'malam',  label: '🌙 Malam' },
+    ];
+
+    const shiftBadge = (shift) => {
+        if (!shift) return <span className="text-slate-400 text-xs italic">-</span>;
+        const map = { pagi: 'bg-amber-50 text-amber-700', siang: 'bg-blue-50 text-blue-700', malam: 'bg-indigo-50 text-indigo-700' };
+        const label = { pagi: '🌅 Pagi', siang: '☀️ Siang', malam: '🌙 Malam' };
+        return <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${map[shift]}`}>{label[shift]}</span>;
+    };
+
     // ── TABLE ────────────────────────────────────────────────
     const columns = [
         { label: 'Nama', key: 'nama' },
         { label: 'NIK KTP', key: 'nik_ktp', render: (v) => v || <span className="text-slate-400 text-xs italic">-</span> },
         { label: 'NIP',     key: 'nip',     render: (v) => v || <span className="text-slate-400 text-xs italic">-</span> },
+        { label: 'Shift',   key: 'shift',   render: (v) => shiftBadge(v) },
         {
             label: 'Pengawas (Mandor)',
             key: 'pengawas',
@@ -192,6 +207,20 @@ export default function Index({ petugas, pengawas_list, kordinator_list, filters
                         </div>
 
                         <div>
+                            <InputLabel htmlFor="c_shift" value="Shift" />
+                            <Select
+                                id="c_shift"
+                                options={shiftOptions}
+                                value={shiftOptions.find(o => o.value === createForm.data.shift) || null}
+                                onChange={(opt) => createForm.setData('shift', opt ? opt.value : '')}
+                                placeholder="-- Pilih Shift --"
+                                isClearable menuPortalTarget={document.body} menuPosition="fixed"
+                                className="mt-1" styles={selectStyles}
+                            />
+                            <InputError message={createForm.errors.shift} className="mt-2" />
+                        </div>
+
+                        <div>
                             <InputLabel htmlFor="c_pengawas_id" value="Pilih Pengawas (Mandor)" />
                             <Select
                                 id="c_pengawas_id"
@@ -243,6 +272,20 @@ export default function Index({ petugas, pengawas_list, kordinator_list, filters
                                     placeholder="18 digit" maxLength={30} />
                                 <InputError message={editForm.errors.nip} className="mt-2" />
                             </div>
+                        </div>
+
+                        <div>
+                            <InputLabel htmlFor="e_shift" value="Shift" />
+                            <Select
+                                id="e_shift"
+                                options={shiftOptions}
+                                value={shiftOptions.find(o => o.value === editForm.data.shift) || null}
+                                onChange={(opt) => editForm.setData('shift', opt ? opt.value : '')}
+                                placeholder="-- Pilih Shift --"
+                                isClearable menuPortalTarget={document.body} menuPosition="fixed"
+                                className="mt-1" styles={selectStyles}
+                            />
+                            <InputError message={editForm.errors.shift} className="mt-2" />
                         </div>
 
                         <div>

@@ -47,19 +47,20 @@ class TemplateImportDataSheet extends StringValueBinder implements FromArray, Wi
             'NAMA PETUGAS',
             'NIK KTP PETUGAS',
             'NIP PETUGAS',
+            'SHIFT PETUGAS',
         ];
 
         // Baris 5-6: Contoh pengisian
-        $rows[] = ['Andi Sumarno',     '198501012020011001', 'andi@dlhk.go.id', 'password123', 'Budi Santoso',   '198001012010011005', 'Fatchul Muin',          '3515072211860001', '198611222025211088'];
-        $rows[] = ['',                  '',                   '',                '',             '',               '',                   'Ian Anugrish',          '3515811110190900002', '199001112025211122'];
-        $rows[] = ['',                  '',                   '',                '',             '',               '',                   'Camelia Novi Ika P.',   '3515084611890900003', ''];
-        $rows[] = ['',                  '',                   '',                '',             'Desi Ariani',    '198205052015022003', 'Brilian Salsabina',     '3578014805030200012', '200303080252501012'];
-        $rows[] = ['Siti Rahayu',       '197803152019012002', 'siti@dlhk.go.id', 'password456', 'Ahmad Yusuf',    '198302022011031006', 'Rian Maulana',          '3515011503850001',   ''];
-        $rows[] = ['',                  '',                   '',                '',             '',               '',                   'Wahyu Santoso',         '3515081209870002',   ''];
+        $rows[] = ['Andi Sumarno',     '198501012020011001', 'andi@dlhk.go.id', 'password123', 'Budi Santoso',   '198001012010011005', 'Fatchul Muin',          '3515072211860001', '198611222025211088', 'Pagi'];
+        $rows[] = ['',                  '',                   '',                '',             '',               '',                   'Ian Anugrish',          '3515811110190900002', '199001112025211122', 'Siang'];
+        $rows[] = ['',                  '',                   '',                '',             '',               '',                   'Camelia Novi Ika P.',   '3515084611890900003', '', 'Malam'];
+        $rows[] = ['',                  '',                   '',                '',             'Desi Ariani',    '198205052015022003', 'Brilian Salsabina',     '3578014805030200012', '200303080252501012', 'Pagi'];
+        $rows[] = ['Siti Rahayu',       '197803152019012002', 'siti@dlhk.go.id', 'password456', 'Ahmad Yusuf',    '198302022011031006', 'Rian Maulana',          '3515011503850001',   '', 'Siang'];
+        $rows[] = ['',                  '',                   '',                '',             '',               '',                   'Wahyu Santoso',         '3515081209870002',   '', 'Malam'];
 
         // 90 baris kosong untuk diisi
         for ($i = 0; $i < 90; $i++) {
-            $rows[] = ['', '', '', '', '', '', '', '', ''];
+            $rows[] = ['', '', '', '', '', '', '', '', '', ''];
         }
 
         return $rows;
@@ -68,9 +69,9 @@ class TemplateImportDataSheet extends StringValueBinder implements FromArray, Wi
     public function styles(Worksheet $sheet): array
     {
         // Merge judul
-        $sheet->mergeCells('A1:I1');
-        $sheet->mergeCells('A2:I2');
-        $sheet->mergeCells('A3:I3');
+        $sheet->mergeCells('A1:J1');
+        $sheet->mergeCells('A2:J2');
+        $sheet->mergeCells('A3:J3');
 
         // Tinggi baris
         $sheet->getRowDimension(1)->setRowHeight(30);
@@ -82,7 +83,7 @@ class TemplateImportDataSheet extends StringValueBinder implements FromArray, Wi
 
         // Shading baris contoh (5-10) – warna beda biru muda
         foreach (range(5, 10) as $r) {
-            $sheet->getStyle("A{$r}:I{$r}")->applyFromArray([
+            $sheet->getStyle("A{$r}:J{$r}")->applyFromArray([
                 'fill' => [
                     'fillType'   => Fill::FILL_SOLID,
                     'startColor' => ['rgb' => 'EFF6FF'],
@@ -143,6 +144,7 @@ class TemplateImportDataSheet extends StringValueBinder implements FromArray, Wi
             'G' => 30, // Nama Petugas
             'H' => 22, // NIK KTP Petugas
             'I' => 22, // NIP Petugas
+            'J' => 18, // Shift Petugas
         ];
     }
 

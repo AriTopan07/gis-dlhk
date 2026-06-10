@@ -13,7 +13,7 @@ class Petugas extends Model
 
     protected $table = 'petugas';
 
-    protected $fillable = ['pengawas_id', 'nama', 'nik_ktp', 'nip'];
+    protected $fillable = ['pengawas_id', 'nama', 'nik_ktp', 'nip', 'shift'];
 
     public function pengawas(): BelongsTo
     {

@@ -3,7 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Encoders\WebpEncoder;
+use App\Exports\UlasanExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UlasanController extends Controller
 {
@@ -39,6 +46,11 @@ class UlasanController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Filter: Lokasi
+        if ($request->filled('lokasi_id')) {
+            $query->where('lokasi_id', $request->lokasi_id);
+        }
+
         // Clone query for stats before pagination
         $statsQuery = clone $query;
         $total = $statsQuery->count();
@@ -58,8 +70,8 @@ class UlasanController extends Controller
         ];
 
         // Pagination
-        $ulasans = $query->paginate(12)->through(function ($ulasan) {
-            $nama = $ulasan->user->name ?? $ulasan->kordinator->user->name ?? $ulasan->kordinator->nama ?? 'Unknown';
+        $ulasans = $query->paginate(15)->through(function ($ulasan) {
+            $nama = $ulasan->nama_pengulas ?? $ulasan->user->name ?? $ulasan->kordinator->user->name ?? $ulasan->kordinator->nama ?? 'Anonim';
             return [
                 'id' => $ulasan->id,
                 'nama' => $nama,
@@ -68,7 +80,8 @@ class UlasanController extends Controller
                 'komentar' => $ulasan->komentar,
                 'foto' => $ulasan->foto ? asset('storage/' . $ulasan->foto) : null,
                 'lokasi' => $ulasan->lokasi->lokasi ?? 'Unknown',
-                'tanggal' => \Carbon\Carbon::parse($ulasan->tanggal)->translatedFormat('d F Y'),
+                'tanggal' => \Carbon\Carbon::parse($ulasan->created_at)->translatedFormat('d F Y'),
+                'jam'     => \Carbon\Carbon::parse($ulasan->created_at)->format('H:i'),
                 'status' => $ulasan->status,
             ];
         });
@@ -78,36 +91,66 @@ class UlasanController extends Controller
         return Inertia::render('Ulasan/Index', [
             'ulasans' => $ulasans,
             'lokasis' => $lokasis,
-            'stats' => $stats,
-            'filters' => $request->only(['search', 'rating', 'status']),
+            'stats'   => $stats,
+            'filters' => $request->only(['search', 'rating', 'status', 'lokasi_id']),
         ]);
+    }
+
+    public function export(Request $request)
+    {
+        $filters  = $request->only(['search', 'rating', 'status', 'lokasi_id']);
+        $filename = 'ulasan-' . now()->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(new UlasanExport($filters), $filename);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
+            'nama_pengulas' => 'nullable|string|max:255',
             'lokasi_id' => 'required|exists:lokasis,id',
-            'rating' => 'required|integer|min:1|max:5',
-            'komentar' => 'nullable|string',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:1024',
+            'rating'    => 'required|integer|min:1|max:5',
+            'komentar'  => 'nullable|string',
+            'foto'      => 'required|image|mimes:jpg,jpeg,png,webp',
         ]);
 
         $user = auth()->user();
-        if (!$user->hasRole(['superadmin', 'admin', 'kordinator'])) {
-            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk memberikan ulasan.');
-        }
 
         // Find kordinator record if user is a kordinator
-        $kordinator = \App\Models\Kordinator::where('user_id', $user->id)->first();
+        $kordinatorId = null;
+        if ($user && $user->hasRole('kordinator')) {
+            $kordinator = \App\Models\Kordinator::where('user_id', $user->id)->first();
+            $kordinatorId = $kordinator?->id;
+        }
 
         $fotoPath = null;
         if ($request->hasFile('foto')) {
-            $fotoPath = $request->file('foto')->store('ulasan', 'public');
+            $file    = $request->file('foto');
+            $manager = new ImageManager(new Driver());
+            $image   = $manager->decode($file->getRealPath());
+
+            // Scale down jika lebar > 1920px
+            $image->scaleDown(width: 1920);
+
+            // Encode ke webp dengan kualitas awal 85
+            $quality = 85;
+            $encoded = $image->encode(new WebpEncoder(quality: $quality));
+
+            // Turunkan kualitas sampai < 1MB jika masih terlalu besar
+            while (strlen((string) $encoded) > 1 * 1024 * 1024 && $quality > 20) {
+                $quality -= 5;
+                $encoded  = $image->encode(new WebpEncoder(quality: $quality));
+            }
+
+            $filename = 'ulasan/' . Str::uuid() . '.webp';
+            Storage::disk('public')->put($filename, (string) $encoded);
+            $fotoPath = $filename;
         }
 
         \App\Models\Ulasan::create([
-            'user_id' => $user->id,
-            'kordinator_id' => $kordinator?->id,
+            'user_id' => $user?->id,
+            'nama_pengulas' => $request->nama_pengulas ?: ($user?->name ?? 'Anonim'),
+            'kordinator_id' => $kordinatorId,
             'lokasi_id' => $request->lokasi_id,
             'tanggal' => now()->toDateString(),
             'rating' => $request->rating,
@@ -144,8 +187,30 @@ class UlasanController extends Controller
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menghapus ulasan.');
         }
 
+        if ($ulasan->foto) {
+            Storage::disk('public')->delete($ulasan->foto);
+        }
         $ulasan->delete();
 
-        return redirect()->back()->with('success', 'Ulasan berhasil dihapus.');
+        return redirect()->back()->with('success', 'Ulasan berhasil dihapus');
+    }
+
+    public function reset()
+    {
+        $user = auth()->user();
+        if (!$user->hasRole(['superadmin', 'admin'])) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk mereset ulasan.');
+        }
+
+        // Hapus semua foto dari storage
+        $ulasans = \App\Models\Ulasan::whereNotNull('foto')->get();
+        foreach ($ulasans as $ulasan) {
+            Storage::disk('public')->delete($ulasan->foto);
+        }
+
+        // Hapus semua data
+        \App\Models\Ulasan::truncate();
+
+        return redirect()->back()->with('success', 'Semua ulasan berhasil dihapus.');
     }
 }

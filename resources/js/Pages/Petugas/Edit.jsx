@@ -12,12 +12,19 @@ export default function Edit({ petugas, pengawas }) {
         pengawas_id: petugas.pengawas_id || '',
         nik_ktp:     petugas.nik_ktp     || '',
         nip:         petugas.nip         || '',
+        shift:       petugas.shift       || '',
     });
 
     const submit = (e) => {
         e.preventDefault();
         patch(route('petugas.update', petugas.id));
     };
+
+    const shiftOptions = [
+        { value: 'pagi',  label: '🌅 Pagi' },
+        { value: 'siang', label: '☀️ Siang' },
+        { value: 'malam', label: '🌙 Malam' },
+    ];
 
     const selectStyles = {
         control: (base, state) => ({
@@ -85,6 +92,22 @@ export default function Edit({ petugas, pengawas }) {
                                     />
                                     <InputError message={errors.nip} className="mt-2" />
                                 </div>
+                            </div>
+
+                            {/* Shift */}
+                            <div>
+                                <InputLabel htmlFor="shift" value="Shift" />
+                                <Select
+                                    id="shift"
+                                    options={shiftOptions}
+                                    value={shiftOptions.find(o => o.value === data.shift) || null}
+                                    onChange={(opt) => setData('shift', opt ? opt.value : '')}
+                                    placeholder="-- Pilih Shift --"
+                                    isClearable
+                                    className="mt-1"
+                                    styles={selectStyles}
+                                />
+                                <InputError message={errors.shift} className="mt-2" />
                             </div>
 
                             {/* Pengawas */}

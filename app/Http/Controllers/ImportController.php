@@ -54,6 +54,8 @@ class ImportController extends Controller
                 $namaPetugas     = trim($row[6] ?? '');
                 $nikKtpPetugas   = trim($row[7] ?? '');
                 $nipPetugas      = trim($row[8] ?? '');
+                $shiftPetugas    = strtolower(trim($row[9] ?? ''));
+                $shiftPetugas    = in_array($shiftPetugas, ['pagi', 'siang', 'malam']) ? $shiftPetugas : null;
 
                 if (!$namaKordinator && !$namaPengawas && !$namaPetugas) {
                     continue; // Skip baris kosong
@@ -99,16 +101,17 @@ class ImportController extends Controller
                 }
 
                 $previewData[] = [
-                    'row'        => $rowNum,
-                    'kordinator' => $namaKordinator,
-                    'nip_kord'   => $nipKordinator,
-                    'pengawas'   => $namaPengawas,
-                    'nip_pengawas'=> $nipPengawas,
-                    'petugas'    => $namaPetugas,
-                    'nik_petugas'=> $nikKtpPetugas,
-                    'nip_petugas'=> $nipPetugas,
-                    'status'     => count($errors) > 0 ? implode(', ', $errors) : 'Valid',
-                    'is_error'   => count($errors) > 0 && strpos($errors[0], '(Info)') === false && strpos($errors[0], '(Skip)') === false,
+                    'row'          => $rowNum,
+                    'kordinator'   => $namaKordinator,
+                    'nip_kord'     => $nipKordinator,
+                    'pengawas'     => $namaPengawas,
+                    'nip_pengawas' => $nipPengawas,
+                    'petugas'      => $namaPetugas,
+                    'nik_petugas'  => $nikKtpPetugas,
+                    'nip_petugas'  => $nipPetugas,
+                    'shift_petugas'=> $shiftPetugas,
+                    'status'       => count($errors) > 0 ? implode(', ', $errors) : 'Valid',
+                    'is_error'     => count($errors) > 0 && strpos($errors[0], '(Info)') === false && strpos($errors[0], '(Skip)') === false,
                 ];
             }
 

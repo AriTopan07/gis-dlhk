@@ -48,6 +48,9 @@ class HierarkiSheetImport extends StringValueBinder implements ToCollection, Wit
             $namaPetugas     = trim($r[6] ?? '');
             $nikKtpPetugas   = trim($r[7] ?? '');
             $nipPetugas      = trim($r[8] ?? '');
+            $shiftPetugas    = strtolower(trim($r[9] ?? ''));
+            // Normalisasi alias shift
+            $shiftPetugas    = in_array($shiftPetugas, ['pagi', 'siang', 'malam']) ? $shiftPetugas : null;
 
             // Lewati baris kosong total
             if (!$namaKordinator && !$namaPengawas && !$namaPetugas) {
@@ -165,6 +168,7 @@ class HierarkiSheetImport extends StringValueBinder implements ToCollection, Wit
                         'pengawas_id' => $this->lastPengawas->id,
                         'nik_ktp'     => $nikKtpPetugas ?: null,
                         'nip'         => $nipPetugas    ?: null,
+                        'shift'       => $shiftPetugas,
                     ]);
                     $this->created_petugas++;
                 }

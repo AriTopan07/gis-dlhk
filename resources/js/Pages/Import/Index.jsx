@@ -149,6 +149,7 @@ export default function Index() {
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Petugas</th>
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">NIK Petugas</th>
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">NIP Petugas</th>
+                                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Shift</th>
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                                         </tr>
                                     </thead>
@@ -163,6 +164,17 @@ export default function Index() {
                                                 <td className="px-4 py-3 text-slate-800">{row.petugas || <span className="text-slate-300 italic">-</span>}</td>
                                                 <td className="px-4 py-3 text-slate-600">{row.nik_petugas || <span className="text-slate-300 italic">-</span>}</td>
                                                 <td className="px-4 py-3 text-slate-600">{row.nip_petugas || <span className="text-slate-300 italic">-</span>}</td>
+                                                <td className="px-4 py-3">
+                                                    {row.shift_petugas ? (
+                                                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                                                            row.shift_petugas === 'pagi'  ? 'bg-amber-50 text-amber-700' :
+                                                            row.shift_petugas === 'siang' ? 'bg-blue-50 text-blue-700' :
+                                                                                            'bg-indigo-50 text-indigo-700'
+                                                        }`}>
+                                                            {row.shift_petugas === 'pagi' ? '🌅 Pagi' : row.shift_petugas === 'siang' ? '☀️ Siang' : '🌙 Malam'}
+                                                        </span>
+                                                    ) : <span className="text-slate-300 italic">-</span>}
+                                                </td>
                                                 <td className="px-4 py-3">
                                                     {row.is_error ? (
                                                         <span className="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-md">
@@ -182,7 +194,7 @@ export default function Index() {
                                         ))}
                                         {previewData.length === 0 && (
                                             <tr>
-                                                <td colSpan="9" className="px-4 py-8 text-center text-slate-500">
+                                                <td colSpan="10" className="px-4 py-8 text-center text-slate-500">
                                                     Tidak ada data yang terbaca (mulai dari baris ke-5).
                                                 </td>
                                             </tr>

@@ -701,18 +701,7 @@ const MapComponent = ({ selectedKecamatan, onReset, canReview = false, onOpenRev
                 </div>
             </div>
 
-            {/* Review Badge */}
-            {canReview && (
-                <div className="absolute top-6 left-6 z-[1000] pointer-events-none">
-                    <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-emerald-100 px-5 py-3 flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
-                        <div>
-                            <p className="text-xs font-bold text-slate-800">Mode Ulasan</p>
-                            <p className="text-[10px] text-slate-400">Klik marker untuk memberi ulasan</p>
-                        </div>
-                    </div>
-                </div>
-            )}
+
 
         </div>
     );

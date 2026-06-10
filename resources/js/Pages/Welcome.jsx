@@ -72,6 +72,7 @@ export default function Welcome({ auth, canReview }) {
 
     const { data, setData, post, processing, errors, reset } = useForm({
         lokasi_id: '',
+        nama_pengulas: '',
         rating: 0,
         komentar: '',
         foto: null,
@@ -93,12 +94,6 @@ export default function Welcome({ auth, canReview }) {
     const handleFotoChange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
-        if (file.size > 1024 * 1024) {
-            alert('Ukuran file maksimal 1MB');
-            e.target.value = '';
-            return;
-        }
 
         setData('foto', file);
         const reader = new FileReader();
@@ -216,8 +211,8 @@ export default function Welcome({ auth, canReview }) {
                     <main className="flex-1 relative">
                         <MapComponent 
                             selectedKecamatan={selectedKecamatan} 
-                            onReset={handleReset}
-                            canReview={canReview}
+                            activeKecamatan={selectedKecamatan}
+                            canReview={true}
                             onOpenReview={openReviewModal}
                         />
                     </main>
@@ -228,29 +223,45 @@ export default function Welcome({ auth, canReview }) {
             <Modal show={showReviewModal} maxWidth="lg" onClose={closeReviewModal}>
                 <form onSubmit={submitReview} className="relative">
                     {/* Header */}
-                    <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-5">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-bold text-white">Berikan Ulasan</h3>
-                                {selectedLokasi && (
-                                    <div className="flex items-center gap-1.5 mt-1 text-emerald-100 text-sm">
-                                        <Icons.MapPin />
-                                        <span>{selectedLokasi.lokasi}</span>
-                                    </div>
-                                )}
-                            </div>
-                            <button
-                                type="button"
-                                onClick={closeReviewModal}
-                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/20 text-white hover:bg-white/30 transition-colors"
-                            >
-                                <Icons.X />
-                            </button>
+                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white rounded-t-2xl">
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800">Beri Ulasan</h2>
+                            <p className="text-xs text-slate-500 mt-1">Bagaimana penilaian Anda terhadap lokasi ini?</p>
                         </div>
+                        <button type="button" onClick={closeReviewModal} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+                            <Icons.X size={18} />
+                        </button>
                     </div>
 
                     {/* Body */}
-                    <div className="px-6 py-5 space-y-5">
+                    <div className="px-6 py-5 space-y-5 overflow-y-auto max-h-[60vh]">
+                        {/* Lokasi Info */}
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                <Icons.MapPin size={20} />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lokasi yang diulas</span>
+                                <span className="text-sm font-bold text-slate-800">{selectedLokasi?.lokasi}</span>
+                            </div>
+                        </div>
+
+                        {/* Nama Pengulas */}
+                        {!auth.user && (
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Nama Anda <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={data.nama_pengulas}
+                                    onChange={e => setData('nama_pengulas', e.target.value)}
+                                    placeholder="Masukkan nama Anda..."
+                                    className="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-400 focus:ring-emerald-400 transition-colors"
+                                />
+                                {errors.nama_pengulas && <p className="text-xs text-red-500 mt-1">{errors.nama_pengulas}</p>}
+                            </div>
+                        )}
+
                         {/* Rating */}
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-2">Rating</label>
@@ -281,7 +292,7 @@ export default function Welcome({ auth, canReview }) {
                         {/* Foto Upload */}
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-2">
-                                Foto <span className="text-slate-400 font-normal">(opsional, maks. 1MB)</span>
+                                Foto <span className="text-red-500">*</span>
                             </label>
 
                             {fotoPreview ? (
@@ -307,7 +318,7 @@ export default function Welcome({ auth, canReview }) {
                                     <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-emerald-500 transition-colors">
                                         <Icons.Camera />
                                         <span className="text-sm font-medium">Klik untuk upload foto</span>
-                                        <span className="text-xs text-slate-300">JPG, JPEG, PNG, WebP • Maks 1MB</span>
+                                        <span className="text-xs text-slate-300">JPG, JPEG, PNG, WebP</span>
                                     </div>
                                     <input
                                         type="file"
@@ -332,7 +343,7 @@ export default function Welcome({ auth, canReview }) {
                         </button>
                         <button
                             type="submit"
-                            disabled={processing || data.rating === 0}
+                            disabled={processing || data.rating === 0 || !data.foto}
                             className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>

@@ -13,6 +13,7 @@ class Ulasan extends Model
 
     protected $fillable = [
         'user_id',
+        'nama_pengulas',
         'kordinator_id',
         'lokasi_id',
         'tanggal',

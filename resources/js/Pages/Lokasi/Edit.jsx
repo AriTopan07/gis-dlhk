@@ -9,6 +9,7 @@ import Select from 'react-select';
 export default function Edit({ lokasi, pengawas }) {
     const { data, setData, put, processing, errors } = useForm({
         lokasi: lokasi.lokasi || '',
+        kategori: lokasi.kategori || 'jalan',
         latitude: lokasi.latitude || '',
         longitude: lokasi.longitude || '',
         type: lokasi.type || 'point',
@@ -66,6 +67,25 @@ export default function Edit({ lokasi, pengawas }) {
                                             placeholder="Contoh: Taman ASA - Fly Over Jenggolo Atas..."
                                         />
                                         <InputError message={errors.lokasi} className="mt-2" />
+                                    </div>
+
+                                    <div className="w-full flex flex-col">
+                                        <InputLabel htmlFor="kategori" value="Kategori Lokasi" />
+                                        <Select
+                                            id="kategori"
+                                            options={[
+                                                { value: 'jalan', label: 'Jalan' },
+                                                { value: 'taman', label: 'Taman' },
+                                            ]}
+                                            value={{ value: data.kategori, label: data.kategori === 'taman' ? 'Taman' : 'Jalan' }}
+                                            onChange={(option) => setData('kategori', option ? option.value : 'jalan')}
+                                            placeholder="-- Pilih Kategori --"
+                                            menuPortalTarget={document.body}
+                                            menuPosition="fixed"
+                                            className="mt-1"
+                                            styles={selectStyles}
+                                        />
+                                        <InputError message={errors.kategori} className="mt-2" />
                                     </div>
 
                                     <div className="w-full">

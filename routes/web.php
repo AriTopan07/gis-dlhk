@@ -24,6 +24,9 @@ Route::get('/dashboard', function () {
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Public routes for Ulasan
+Route::post('/ulasan', [App\Http\Controllers\UlasanController::class, 'store'])->name('ulasan.store');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -37,10 +40,11 @@ Route::middleware('auth')->group(function () {
     Route::resource('petugas', App\Http\Controllers\PetugasController::class)->parameters(['petugas' => 'petugas']);
     Route::get('/petugas/template/download', [App\Http\Controllers\PetugasController::class, 'downloadTemplate'])->name('petugas.template');
     
-    // Ulasan (Reviews)
+    // Ulasan (Reviews) - Other methods are auth protected
     Route::get('/ulasan', [App\Http\Controllers\UlasanController::class, 'index'])->name('ulasan.index');
-    Route::post('/ulasan', [App\Http\Controllers\UlasanController::class, 'store'])->name('ulasan.store');
+    Route::get('/ulasan/export', [App\Http\Controllers\UlasanController::class, 'export'])->name('ulasan.export');
     Route::put('/ulasan/{ulasan}', [App\Http\Controllers\UlasanController::class, 'update'])->name('ulasan.update');
+    Route::delete('/ulasan/reset', [App\Http\Controllers\UlasanController::class, 'reset'])->name('ulasan.reset');
     Route::delete('/ulasan/{ulasan}', [App\Http\Controllers\UlasanController::class, 'destroy'])->name('ulasan.destroy');
 
     // Import Data Hierarki

@@ -8,11 +8,11 @@ import Select from 'react-select';
 
 export default function Create({ pengawas }) {
     const { data, setData, post, processing, errors } = useForm({
-        lokasis: [{ id: Date.now(), lokasi: '', latitude: '', longitude: '', type: 'point', path: [], pengawas_id: '' }],
+        lokasis: [{ id: Date.now(), lokasi: '', kategori: 'jalan', latitude: '', longitude: '', type: 'point', path: [], pengawas_id: '' }],
     });
 
     const addLokasi = () => {
-        setData('lokasis', [...data.lokasis, { id: Date.now(), lokasi: '', latitude: '', longitude: '', type: 'point', path: [], pengawas_id: '' }]);
+        setData('lokasis', [...data.lokasis, { id: Date.now(), lokasi: '', kategori: 'jalan', latitude: '', longitude: '', type: 'point', path: [], pengawas_id: '' }]);
     };
 
     const removeLokasi = (index) => {
@@ -61,6 +61,37 @@ export default function Create({ pengawas }) {
                                             />
                                             {errors[`lokasis.${index}.lokasi`] && (
                                                 <InputError message={errors[`lokasis.${index}.lokasi`]} className="mt-2" />
+                                            )}
+                                        </div>
+
+                                        <div className="w-full flex flex-col">
+                                            <InputLabel htmlFor={`kategori-${index}`} value={`Kategori Lokasi ${index + 1}`} />
+                                            <Select
+                                                id={`kategori-${index}`}
+                                                options={[
+                                                    { value: 'jalan', label: 'Jalan' },
+                                                    { value: 'taman', label: 'Taman' },
+                                                ]}
+                                                value={{ value: item.kategori, label: item.kategori === 'taman' ? 'Taman' : 'Jalan' }}
+                                                onChange={(option) => updateLokasiField(index, 'kategori', option ? option.value : 'jalan')}
+                                                placeholder="-- Pilih Kategori --"
+                                                menuPortalTarget={document.body}
+                                                menuPosition="fixed"
+                                                className="mt-1"
+                                                styles={{
+                                                    control: (base, state) => ({
+                                                        ...base,
+                                                        borderColor: state.isFocused ? '#6366f1' : '#cbd5e1',
+                                                        borderRadius: '0.75rem',
+                                                        padding: '0.25rem',
+                                                        boxShadow: state.isFocused ? '0 0 0 1px #6366f1' : '0 1px 2px 0 rgba(0,0,0,0.05)',
+                                                        '&:hover': { borderColor: state.isFocused ? '#6366f1' : '#94a3b8' },
+                                                    }),
+                                                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                                                }}
+                                            />
+                                            {errors[`lokasis.${index}.kategori`] && (
+                                                <InputError message={errors[`lokasis.${index}.kategori`]} className="mt-2" />
                                             )}
                                         </div>
 

@@ -93,6 +93,7 @@ class PetugasController extends Controller
             'pengawas_id' => 'required|uuid|exists:pengawas,id',
             'nik_ktp'     => 'nullable|string|max:20',
             'nip'         => 'nullable|string|max:30',
+            'shift'       => 'nullable|in:pagi,siang,malam',
         ]);
 
         if ($isKordinator) {
@@ -102,7 +103,7 @@ class PetugasController extends Controller
             }
         }
 
-        Petugas::create($request->only(['nama', 'pengawas_id', 'nik_ktp', 'nip']));
+        Petugas::create($request->only(['nama', 'pengawas_id', 'nik_ktp', 'nip', 'shift']));
 
         return redirect()->route('petugas.index')->with('success', 'Petugas berhasil ditambahkan.');
     }
@@ -144,6 +145,7 @@ class PetugasController extends Controller
             'pengawas_id' => 'required|uuid|exists:pengawas,id',
             'nik_ktp'     => 'nullable|string|max:20',
             'nip'         => 'nullable|string|max:30',
+            'shift'       => 'nullable|in:pagi,siang,malam',
         ]);
 
         if ($isKordinator) {
@@ -153,7 +155,7 @@ class PetugasController extends Controller
             }
         }
 
-        $petugas->update($request->only(['nama', 'pengawas_id', 'nik_ktp', 'nip']));
+        $petugas->update($request->only(['nama', 'pengawas_id', 'nik_ktp', 'nip', 'shift']));
 
         return redirect()->route('petugas.index')->with('success', 'Petugas berhasil diupdate.');
     }

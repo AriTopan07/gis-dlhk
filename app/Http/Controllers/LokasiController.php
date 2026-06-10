@@ -35,10 +35,51 @@ class LokasiController extends Controller
         }
         $pengawas = $pengawasQuery->orderBy('nama')->get(['id', 'nama']);
 
+        // Calculate summary stats
+        $statsLokasi = Lokasi::when($isKordinator, function ($query) use ($kordinatorId) {
+            return $query->whereHas('pengawas', function ($q) use ($kordinatorId) {
+                $q->where('kordinator_id', $kordinatorId);
+            });
+        })->get(['kategori', 'type', 'path']);
+
+        $totalLokasi = $statsLokasi->count();
+        $totalJalan = $statsLokasi->where('kategori', 'jalan')->count();
+        $totalTaman = $statsLokasi->where('kategori', 'taman')->count();
+
+        $totalPanjang = 0;
+        foreach ($statsLokasi->where('type', 'line') as $lok) {
+            $path = $lok->path;
+            if (is_array($path) && count($path) > 1) {
+                for ($i = 0; $i < count($path) - 1; $i++) {
+                    $lat1 = floatval($path[$i]['lat'] ?? 0);
+                    $lng1 = floatval($path[$i]['lng'] ?? 0);
+                    $lat2 = floatval($path[$i+1]['lat'] ?? 0);
+                    $lng2 = floatval($path[$i+1]['lng'] ?? 0);
+                    
+                    if ($lat1 && $lng1 && $lat2 && $lng2) {
+                        $R = 6371e3;
+                        $p1 = $lat1 * pi() / 180;
+                        $p2 = $lat2 * pi() / 180;
+                        $dp = ($lat2 - $lat1) * pi() / 180;
+                        $dl = ($lng2 - $lng1) * pi() / 180;
+                        $a = sin($dp/2) * sin($dp/2) + cos($p1) * cos($p2) * sin($dl/2) * sin($dl/2);
+                        $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+                        $totalPanjang += ($R * $c);
+                    }
+                }
+            }
+        }
+
         return Inertia::render('Lokasi/Index', [
             'lokasis'    => $lokasis,
             'filters'    => $request->only(['search']),
             'pengawas'   => $pengawas,
+            'stats'      => [
+                'total' => $totalLokasi,
+                'jalan' => $totalJalan,
+                'taman' => $totalTaman,
+                'panjang' => $totalPanjang,
+            ]
         ]);
     }
 
@@ -68,6 +109,7 @@ class LokasiController extends Controller
         $validated = $request->validate([
             'lokasis'              => 'required|array',
             'lokasis.*.lokasi'     => 'required|string',
+            'lokasis.*.kategori'   => 'required|in:jalan,taman',
             'lokasis.*.latitude'   => 'nullable|string',
             'lokasis.*.longitude'  => 'nullable|string',
             'lokasis.*.type'       => 'nullable|string',
@@ -85,6 +127,7 @@ class LokasiController extends Controller
 
             Lokasi::create([
                 'lokasi'        => $item['lokasi'],
+                'kategori'      => $item['kategori'] ?? 'jalan',
                 'type'          => $item['type'] ?? 'point',
                 'latitude'      => $item['latitude'] ?? null,
                 'longitude'     => $item['longitude'] ?? null,
@@ -130,6 +173,7 @@ class LokasiController extends Controller
 
         $validated = $request->validate([
             'lokasi'        => 'required|string',
+            'kategori'      => 'required|in:jalan,taman',
             'latitude'      => 'nullable|string',
             'longitude'     => 'nullable|string',
             'type'          => 'nullable|string',
@@ -169,7 +213,7 @@ class LokasiController extends Controller
             ->whereNotNull('longitude')
             ->withCount('ulasan')
             ->withAvg('ulasan', 'rating')
-            ->get(['id', 'lokasi', 'type', 'latitude', 'longitude', 'path'])
+            ->get(['id', 'lokasi', 'kategori', 'type', 'latitude', 'longitude', 'path'])
             ->map(function ($lokasi) {
                 $lokasi->ulasan_avg = $lokasi->ulasan_avg_rating ? round($lokasi->ulasan_avg_rating, 1) : 0;
                 $lokasi->ulasan_total = $lokasi->ulasan_count;
