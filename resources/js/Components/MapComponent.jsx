@@ -544,14 +544,41 @@ const MapComponent = ({ selectedKecamatan, onReset, canReview = false, onOpenRev
                                                             <div className="pt-3 border-t border-slate-200/60">
                                                                 <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block mb-1">Daftar Petugas</span>
                                                                 {locationDetails[marker.id]?.pengawas?.petugas?.length > 0 ? (
-                                                                    <ul className="space-y-1">
-                                                                        {locationDetails[marker.id].pengawas.petugas.map(p => (
-                                                                            <li key={p.id} className="flex items-start gap-2">
-                                                                                <span className="text-[#10B981] mt-0.5 text-xs">•</span>
-                                                                                <span className="text-slate-600 text-[12px]">{p.nama}</span>
-                                                                            </li>
-                                                                        ))}
-                                                                    </ul>
+                                                                    <div className="space-y-3">
+                                                                        {Object.entries(locationDetails[marker.id].pengawas.petugas.reduce((acc, p) => {
+                                                                            const shiftName = p.shift ? p.shift.charAt(0).toUpperCase() + p.shift.toLowerCase().slice(1) : 'Tanpa Shift';
+                                                                            if (!acc[shiftName]) acc[shiftName] = [];
+                                                                            acc[shiftName].push(p);
+                                                                            return acc;
+                                                                        }, {}))
+                                                                        .sort(([a], [b]) => {
+                                                                            const order = { 'Pagi': 1, 'Siang': 2, 'Malam': 3, 'Tanpa Shift': 4 };
+                                                                            return (order[a] || 99) - (order[b] || 99);
+                                                                        })
+                                                                        .map(([shift, petugasList]) => {
+                                                                            const shiftStyles = {
+                                                                                'Pagi': 'text-sky-700 bg-sky-100',
+                                                                                'Siang': 'text-amber-700 bg-amber-100',
+                                                                                'Malam': 'text-indigo-700 bg-indigo-100',
+                                                                                'Tanpa Shift': 'text-slate-600 bg-slate-100'
+                                                                            };
+                                                                            return (
+                                                                                <div key={shift}>
+                                                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md mb-1.5 inline-block ${shiftStyles[shift] || shiftStyles['Tanpa Shift']}`}>
+                                                                                        {shift === 'Tanpa Shift' ? shift : `Shift ${shift}`}
+                                                                                    </span>
+                                                                                    <ul className="space-y-1">
+                                                                                        {petugasList.map(p => (
+                                                                                            <li key={p.id} className="flex items-start gap-2">
+                                                                                                <span className="text-[#10B981] mt-0.5 text-xs">•</span>
+                                                                                                <span className="text-slate-700 text-[12px] font-medium">{p.nama}</span>
+                                                                                            </li>
+                                                                                        ))}
+                                                                                    </ul>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
                                                                 ) : (
                                                                     <span className="text-slate-400 italic text-[11px]">Belum ada petugas</span>
                                                                 )}
