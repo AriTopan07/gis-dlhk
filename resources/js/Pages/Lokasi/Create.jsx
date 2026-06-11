@@ -8,11 +8,11 @@ import Select from 'react-select';
 
 export default function Create({ pengawas }) {
     const { data, setData, post, processing, errors } = useForm({
-        lokasis: [{ id: Date.now(), lokasi: '', kategori: 'jalan', latitude: '', longitude: '', type: 'point', path: [], pengawas_id: '' }],
+        lokasis: [{ id: Date.now(), lokasi: '', kategori: 'jalan', latitude: '', longitude: '', type: 'point', path: [], pengawas_pagi_id: '', pengawas_siang_id: '', pengawas_malam_id: '' }],
     });
 
     const addLokasi = () => {
-        setData('lokasis', [...data.lokasis, { id: Date.now(), lokasi: '', kategori: 'jalan', latitude: '', longitude: '', type: 'point', path: [], pengawas_id: '' }]);
+        setData('lokasis', [...data.lokasis, { id: Date.now(), lokasi: '', kategori: 'jalan', latitude: '', longitude: '', type: 'point', path: [], pengawas_pagi_id: '', pengawas_siang_id: '', pengawas_malam_id: '' }]);
     };
 
     const removeLokasi = (index) => {
@@ -95,43 +95,123 @@ export default function Create({ pengawas }) {
                                             )}
                                         </div>
 
-                                        <div>
-                                            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                                                Pengawas (Mandor)
-                                            </label>
-                                            <Select
-                                                id={`pengawas_id-${index}`}
-                                                options={pengawas.map(p => ({
-                                                    value: p.id,
-                                                    label: `${p.nama} ${p.lokasi_exists && p.id !== item.pengawas_id ? '(Sudah Ada Lokasi)' : ''}`.trim()
-                                                }))}
-                                                value={pengawas.map(p => ({
-                                                    value: p.id,
-                                                    label: `${p.nama} ${p.lokasi_exists && p.id !== item.pengawas_id ? '(Sudah Ada Lokasi)' : ''}`.trim()
-                                                })).find(o => o.value === item.pengawas_id) || null}
-                                                onChange={(option) => updateLokasiField(index, 'pengawas_id', option ? option.value : '')}
-                                                placeholder="-- Pilih Pengawas --"
-                                                isClearable
-                                                menuPortalTarget={document.body}
-                                                menuPosition="fixed"
-                                                className="mt-1"
-                                                styles={{
-                                                    control: (base, state) => ({
-                                                        ...base,
-                                                        borderColor: state.isFocused ? '#6366f1' : '#cbd5e1',
-                                                        borderRadius: '0.75rem',
-                                                        padding: '0.25rem',
-                                                        boxShadow: state.isFocused ? '0 0 0 1px #6366f1' : '0 1px 2px 0 rgba(0,0,0,0.05)',
-                                                        '&:hover': { borderColor: state.isFocused ? '#6366f1' : '#94a3b8' },
-                                                    }),
-                                                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                                                }}
-                                            />
-                                            {errors[`lokasis.${index}.pengawas_id`] && (
-                                                <p className="mt-2 text-xs font-medium text-red-500">
-                                                    {errors[`lokasis.${index}.pengawas_id`]}
-                                                </p>
-                                            )}
+                                        <div className="flex flex-col md:flex-row gap-4">
+                                            <div className="flex-1">
+                                                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                                                    Mandor Shift Pagi
+                                                </label>
+                                                <Select
+                                                    id={`pengawas_pagi_id-${index}`}
+                                                    options={pengawas.map(p => ({
+                                                        value: p.id,
+                                                        label: p.nama
+                                                    }))}
+                                                    value={pengawas.map(p => ({
+                                                        value: p.id,
+                                                        label: p.nama
+                                                    })).find(o => o.value === item.pengawas_pagi_id) || null}
+                                                    onChange={(option) => updateLokasiField(index, 'pengawas_pagi_id', option ? option.value : '')}
+                                                    placeholder="-- Pilih Mandor --"
+                                                    isClearable
+                                                    menuPortalTarget={document.body}
+                                                    menuPosition="fixed"
+                                                    className="mt-1"
+                                                    styles={{
+                                                        control: (base, state) => ({
+                                                            ...base,
+                                                            borderColor: state.isFocused ? '#6366f1' : '#cbd5e1',
+                                                            borderRadius: '0.75rem',
+                                                            padding: '0.25rem',
+                                                            boxShadow: state.isFocused ? '0 0 0 1px #6366f1' : '0 1px 2px 0 rgba(0,0,0,0.05)',
+                                                            '&:hover': { borderColor: state.isFocused ? '#6366f1' : '#94a3b8' },
+                                                        }),
+                                                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                                                    }}
+                                                />
+                                                {errors[`lokasis.${index}.pengawas_pagi_id`] && (
+                                                    <p className="mt-2 text-xs font-medium text-red-500">
+                                                        {errors[`lokasis.${index}.pengawas_pagi_id`]}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="flex-1">
+                                                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                                                    Mandor Shift Siang
+                                                </label>
+                                                <Select
+                                                    id={`pengawas_siang_id-${index}`}
+                                                    options={pengawas.map(p => ({
+                                                        value: p.id,
+                                                        label: p.nama
+                                                    }))}
+                                                    value={pengawas.map(p => ({
+                                                        value: p.id,
+                                                        label: p.nama
+                                                    })).find(o => o.value === item.pengawas_siang_id) || null}
+                                                    onChange={(option) => updateLokasiField(index, 'pengawas_siang_id', option ? option.value : '')}
+                                                    placeholder="-- Pilih Mandor --"
+                                                    isClearable
+                                                    menuPortalTarget={document.body}
+                                                    menuPosition="fixed"
+                                                    className="mt-1"
+                                                    styles={{
+                                                        control: (base, state) => ({
+                                                            ...base,
+                                                            borderColor: state.isFocused ? '#6366f1' : '#cbd5e1',
+                                                            borderRadius: '0.75rem',
+                                                            padding: '0.25rem',
+                                                            boxShadow: state.isFocused ? '0 0 0 1px #6366f1' : '0 1px 2px 0 rgba(0,0,0,0.05)',
+                                                            '&:hover': { borderColor: state.isFocused ? '#6366f1' : '#94a3b8' },
+                                                        }),
+                                                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                                                    }}
+                                                />
+                                                {errors[`lokasis.${index}.pengawas_siang_id`] && (
+                                                    <p className="mt-2 text-xs font-medium text-red-500">
+                                                        {errors[`lokasis.${index}.pengawas_siang_id`]}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="flex-1">
+                                                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                                                    Mandor Shift Malam
+                                                </label>
+                                                <Select
+                                                    id={`pengawas_malam_id-${index}`}
+                                                    options={pengawas.map(p => ({
+                                                        value: p.id,
+                                                        label: p.nama
+                                                    }))}
+                                                    value={pengawas.map(p => ({
+                                                        value: p.id,
+                                                        label: p.nama
+                                                    })).find(o => o.value === item.pengawas_malam_id) || null}
+                                                    onChange={(option) => updateLokasiField(index, 'pengawas_malam_id', option ? option.value : '')}
+                                                    placeholder="-- Pilih Mandor --"
+                                                    isClearable
+                                                    menuPortalTarget={document.body}
+                                                    menuPosition="fixed"
+                                                    className="mt-1"
+                                                    styles={{
+                                                        control: (base, state) => ({
+                                                            ...base,
+                                                            borderColor: state.isFocused ? '#6366f1' : '#cbd5e1',
+                                                            borderRadius: '0.75rem',
+                                                            padding: '0.25rem',
+                                                            boxShadow: state.isFocused ? '0 0 0 1px #6366f1' : '0 1px 2px 0 rgba(0,0,0,0.05)',
+                                                            '&:hover': { borderColor: state.isFocused ? '#6366f1' : '#94a3b8' },
+                                                        }),
+                                                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                                                    }}
+                                                />
+                                                {errors[`lokasis.${index}.pengawas_malam_id`] && (
+                                                    <p className="mt-2 text-xs font-medium text-red-500">
+                                                        {errors[`lokasis.${index}.pengawas_malam_id`]}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
 
                                         <div className="w-full flex flex-col">

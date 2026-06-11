@@ -536,53 +536,44 @@ const MapComponent = ({ selectedKecamatan, onReset, canReview = false, onOpenRev
                                                         </div>
                                                     ) : locationDetails[marker.id] ? (
                                                         <div className="max-h-[250px] overflow-y-auto custom-scrollbar p-3 space-y-4 border-t border-slate-100">
-                                                            <div>
-                                                                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block mb-0.5">Pengawas (Mandor)</span>
-                                                                <div className="font-bold text-slate-800 text-[13px]">{locationDetails[marker.id]?.pengawas?.nama || <span className="text-slate-400 italic font-normal">Tidak ada pengawas</span>}</div>
-                                                            </div>
+                                                            {(() => {
+                                                                const detail = locationDetails[marker.id];
+                                                                const shifts = [
+                                                                    { label: 'Pagi', data: detail?.pengawas_pagi, color: 'text-emerald-700 bg-emerald-100' },
+                                                                    { label: 'Siang', data: detail?.pengawas_siang, color: 'text-blue-700 bg-blue-100' },
+                                                                    { label: 'Malam', data: detail?.pengawas_malam, color: 'text-indigo-700 bg-indigo-100' }
+                                                                ].filter(s => s.data);
 
-                                                            <div className="pt-3 border-t border-slate-200/60">
-                                                                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block mb-1">Daftar Petugas</span>
-                                                                {locationDetails[marker.id]?.pengawas?.petugas?.length > 0 ? (
-                                                                    <div className="space-y-3">
-                                                                        {Object.entries(locationDetails[marker.id].pengawas.petugas.reduce((acc, p) => {
-                                                                            const shiftName = p.shift ? p.shift.charAt(0).toUpperCase() + p.shift.toLowerCase().slice(1) : 'Tanpa Shift';
-                                                                            if (!acc[shiftName]) acc[shiftName] = [];
-                                                                            acc[shiftName].push(p);
-                                                                            return acc;
-                                                                        }, {}))
-                                                                        .sort(([a], [b]) => {
-                                                                            const order = { 'Pagi': 1, 'Siang': 2, 'Malam': 3, 'Tanpa Shift': 4 };
-                                                                            return (order[a] || 99) - (order[b] || 99);
-                                                                        })
-                                                                        .map(([shift, petugasList]) => {
-                                                                            const shiftStyles = {
-                                                                                'Pagi': 'text-sky-700 bg-sky-100',
-                                                                                'Siang': 'text-amber-700 bg-amber-100',
-                                                                                'Malam': 'text-indigo-700 bg-indigo-100',
-                                                                                'Tanpa Shift': 'text-slate-600 bg-slate-100'
-                                                                            };
-                                                                            return (
-                                                                                <div key={shift}>
-                                                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md mb-1.5 inline-block ${shiftStyles[shift] || shiftStyles['Tanpa Shift']}`}>
-                                                                                        {shift === 'Tanpa Shift' ? shift : `Shift ${shift}`}
-                                                                                    </span>
-                                                                                    <ul className="space-y-1">
-                                                                                        {petugasList.map(p => (
-                                                                                            <li key={p.id} className="flex items-start gap-2">
-                                                                                                <span className="text-[#10B981] mt-0.5 text-xs">•</span>
-                                                                                                <span className="text-slate-700 text-[12px] font-medium">{p.nama}</span>
-                                                                                            </li>
-                                                                                        ))}
-                                                                                    </ul>
-                                                                                </div>
-                                                                            );
-                                                                        })}
+                                                                if (shifts.length === 0) {
+                                                                    return <div className="text-slate-400 italic text-xs py-2">Belum ada pengawas ditugaskan.</div>;
+                                                                }
+
+                                                                return shifts.map((shift, idx) => (
+                                                                    <div key={shift.label} className={idx > 0 ? "pt-4 border-t border-slate-200/60" : ""}>
+                                                                        <div className="flex items-center gap-2 mb-1">
+                                                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${shift.color}`}>
+                                                                                Shift {shift.label}
+                                                                            </span>
+                                                                        </div>
+                                                                        <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block mb-0.5">Pengawas (Mandor)</span>
+                                                                        <div className="font-bold text-slate-800 text-[13px] mb-2">{shift.data.nama}</div>
+
+                                                                        <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block mb-1">Daftar Petugas</span>
+                                                                        {shift.data.petugas?.length > 0 ? (
+                                                                            <ul className="space-y-1">
+                                                                                {shift.data.petugas.map(p => (
+                                                                                    <li key={p.id} className="flex items-start gap-2">
+                                                                                        <span className="text-[#10B981] mt-0.5 text-xs">•</span>
+                                                                                        <span className="text-slate-700 text-[12px] font-medium">{p.nama}</span>
+                                                                                    </li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        ) : (
+                                                                            <span className="text-slate-400 italic text-[11px]">Belum ada petugas</span>
+                                                                        )}
                                                                     </div>
-                                                                ) : (
-                                                                    <span className="text-slate-400 italic text-[11px]">Belum ada petugas</span>
-                                                                )}
-                                                            </div>
+                                                                ));
+                                                            })()}
                                                         </div>
                                                     ) : null}
                                                 </>

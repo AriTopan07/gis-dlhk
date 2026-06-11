@@ -14,7 +14,9 @@ export default function Edit({ lokasi, pengawas }) {
         longitude: lokasi.longitude || '',
         type: lokasi.type || 'point',
         path: lokasi.path || [],
-        pengawas_id: lokasi.pengawas_id || '',
+        pengawas_pagi_id: lokasi.pengawas_pagi_id || '',
+        pengawas_siang_id: lokasi.pengawas_siang_id || '',
+        pengawas_malam_id: lokasi.pengawas_malam_id || '',
     });
 
     const submit = (e) => {
@@ -22,9 +24,9 @@ export default function Edit({ lokasi, pengawas }) {
         put(route('lokasi.update', lokasi.id));
     };
 
-    const pengawasOptions = pengawas.map(p => ({
+    const getPengawasOptions = (currentId) => pengawas.map(p => ({
         value: p.id,
-        label: `${p.nama} ${p.lokasi_exists && p.id !== data.pengawas_id ? '(Sudah Ada Lokasi)' : ''}`.trim()
+        label: `${p.nama} ${p.lokasi_exists && p.id !== currentId ? '(Sudah Ada Lokasi)' : ''}`.trim()
     }));
 
     const selectStyles = {
@@ -88,21 +90,57 @@ export default function Edit({ lokasi, pengawas }) {
                                         <InputError message={errors.kategori} className="mt-2" />
                                     </div>
 
-                                    <div className="w-full">
-                                        <InputLabel htmlFor="pengawas_id" value="Pengawas (Mandor)" />
-                                        <Select
-                                            id="pengawas_id"
-                                            options={pengawasOptions}
-                                            value={pengawasOptions.find(o => o.value === data.pengawas_id) || null}
-                                            onChange={(option) => setData('pengawas_id', option ? option.value : '')}
-                                            placeholder="-- Pilih Pengawas --"
-                                            isClearable
-                                            menuPortalTarget={document.body}
-                                            menuPosition="fixed"
-                                            className="mt-1"
-                                            styles={selectStyles}
-                                        />
-                                        <InputError message={errors.pengawas_id} className="mt-2" />
+                                    <div className="flex flex-col md:flex-row gap-4">
+                                        <div className="flex-1">
+                                            <InputLabel htmlFor="pengawas_pagi_id" value="Mandor Shift Pagi" />
+                                            <Select
+                                                id="pengawas_pagi_id"
+                                                options={getPengawasOptions(data.pengawas_pagi_id)}
+                                                value={getPengawasOptions(data.pengawas_pagi_id).find(o => o.value === data.pengawas_pagi_id) || null}
+                                                onChange={(option) => setData('pengawas_pagi_id', option ? option.value : '')}
+                                                placeholder="-- Pilih Mandor --"
+                                                isClearable
+                                                menuPortalTarget={document.body}
+                                                menuPosition="fixed"
+                                                className="mt-1"
+                                                styles={selectStyles}
+                                            />
+                                            <InputError message={errors.pengawas_pagi_id} className="mt-2" />
+                                        </div>
+
+                                        <div className="flex-1">
+                                            <InputLabel htmlFor="pengawas_siang_id" value="Mandor Shift Siang" />
+                                            <Select
+                                                id="pengawas_siang_id"
+                                                options={getPengawasOptions(data.pengawas_siang_id)}
+                                                value={getPengawasOptions(data.pengawas_siang_id).find(o => o.value === data.pengawas_siang_id) || null}
+                                                onChange={(option) => setData('pengawas_siang_id', option ? option.value : '')}
+                                                placeholder="-- Pilih Mandor --"
+                                                isClearable
+                                                menuPortalTarget={document.body}
+                                                menuPosition="fixed"
+                                                className="mt-1"
+                                                styles={selectStyles}
+                                            />
+                                            <InputError message={errors.pengawas_siang_id} className="mt-2" />
+                                        </div>
+
+                                        <div className="flex-1">
+                                            <InputLabel htmlFor="pengawas_malam_id" value="Mandor Shift Malam" />
+                                            <Select
+                                                id="pengawas_malam_id"
+                                                options={getPengawasOptions(data.pengawas_malam_id)}
+                                                value={getPengawasOptions(data.pengawas_malam_id).find(o => o.value === data.pengawas_malam_id) || null}
+                                                onChange={(option) => setData('pengawas_malam_id', option ? option.value : '')}
+                                                placeholder="-- Pilih Mandor --"
+                                                isClearable
+                                                menuPortalTarget={document.body}
+                                                menuPosition="fixed"
+                                                className="mt-1"
+                                                styles={selectStyles}
+                                            />
+                                            <InputError message={errors.pengawas_malam_id} className="mt-2" />
+                                        </div>
                                     </div>
 
                                     <div className="w-full flex flex-col">

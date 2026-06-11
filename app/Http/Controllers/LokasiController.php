@@ -16,10 +16,16 @@ class LokasiController extends Controller
         $isKordinator = $user->hasRole('kordinator');
         $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
 
-        $lokasis = Lokasi::with('pengawas')
+        $lokasis = Lokasi::with(['pengawasPagi', 'pengawasSiang', 'pengawasMalam'])
             ->when($isKordinator, function ($query) use ($kordinatorId) {
-                return $query->whereHas('pengawas', function ($q) use ($kordinatorId) {
-                    $q->where('kordinator_id', $kordinatorId);
+                return $query->where(function ($q) use ($kordinatorId) {
+                    $q->whereHas('pengawasPagi', function ($q2) use ($kordinatorId) {
+                        $q2->where('kordinator_id', $kordinatorId);
+                    })->orWhereHas('pengawasSiang', function ($q2) use ($kordinatorId) {
+                        $q2->where('kordinator_id', $kordinatorId);
+                    })->orWhereHas('pengawasMalam', function ($q2) use ($kordinatorId) {
+                        $q2->where('kordinator_id', $kordinatorId);
+                    });
                 });
             })
             ->when($search, function ($query, $search) {
@@ -37,9 +43,15 @@ class LokasiController extends Controller
 
         // Calculate summary stats
         $statsLokasi = Lokasi::when($isKordinator, function ($query) use ($kordinatorId) {
-            return $query->whereHas('pengawas', function ($q) use ($kordinatorId) {
-                $q->where('kordinator_id', $kordinatorId);
-            });
+                return $query->where(function ($q) use ($kordinatorId) {
+                    $q->whereHas('pengawasPagi', function ($q2) use ($kordinatorId) {
+                        $q2->where('kordinator_id', $kordinatorId);
+                    })->orWhereHas('pengawasSiang', function ($q2) use ($kordinatorId) {
+                        $q2->where('kordinator_id', $kordinatorId);
+                    })->orWhereHas('pengawasMalam', function ($q2) use ($kordinatorId) {
+                        $q2->where('kordinator_id', $kordinatorId);
+                    });
+                });
         })->get(['kategori', 'type', 'path']);
 
         $totalLokasi = $statsLokasi->count();
@@ -89,7 +101,7 @@ class LokasiController extends Controller
         $isKordinator = $user->hasRole('kordinator');
         $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
 
-        $pengawasQuery = Pengawas::withExists('lokasi');
+        $pengawasQuery = Pengawas::withExists(['lokasiPagi', 'lokasiSiang', 'lokasiMalam']);
         if ($isKordinator) {
             $pengawasQuery->where('kordinator_id', $kordinatorId);
         }
@@ -114,13 +126,21 @@ class LokasiController extends Controller
             'lokasis.*.longitude'  => 'nullable|string',
             'lokasis.*.type'       => 'nullable|string',
             'lokasis.*.path'       => 'nullable|array',
-            'lokasis.*.pengawas_id' => 'nullable|uuid|exists:pengawas,id',
+            'lokasis.*.pengawas_pagi_id' => 'nullable|uuid|exists:pengawas,id',
+            'lokasis.*.pengawas_siang_id' => 'nullable|uuid|exists:pengawas,id',
+            'lokasis.*.pengawas_malam_id' => 'nullable|uuid|exists:pengawas,id',
         ]);
 
         foreach ($validated['lokasis'] as $item) {
-            if (!empty($item['pengawas_id'])) {
-                $pengawas = Pengawas::find($item['pengawas_id']);
-                if ($isKordinator && (!$pengawas || $pengawas->kordinator_id !== $kordinatorId)) {
+            $pengawas_ids = array_filter([
+                $item['pengawas_pagi_id'] ?? null, 
+                $item['pengawas_siang_id'] ?? null, 
+                $item['pengawas_malam_id'] ?? null
+            ]);
+            
+            if ($isKordinator && count($pengawas_ids) > 0) {
+                $invalidPengawas = Pengawas::whereIn('id', $pengawas_ids)->where('kordinator_id', '!=', $kordinatorId)->exists();
+                if ($invalidPengawas) {
                     abort(403, 'Unauthorized.');
                 }
             }
@@ -132,7 +152,9 @@ class LokasiController extends Controller
                 'latitude'      => $item['latitude'] ?? null,
                 'longitude'     => $item['longitude'] ?? null,
                 'path'          => $item['path'] ?? null,
-                'pengawas_id'   => $item['pengawas_id'] ?? null,
+                'pengawas_pagi_id'   => $item['pengawas_pagi_id'] ?? null,
+                'pengawas_siang_id'  => $item['pengawas_siang_id'] ?? null,
+                'pengawas_malam_id'  => $item['pengawas_malam_id'] ?? null,
             ]);
         }
 
@@ -145,11 +167,14 @@ class LokasiController extends Controller
         $isKordinator = $user->hasRole('kordinator');
         $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
 
-        if ($isKordinator && $lokasi->pengawas?->kordinator_id !== $kordinatorId) {
-            abort(403, 'Unauthorized.');
+        if ($isKordinator) {
+            $unauthorized = ($lokasi->pengawasPagi && $lokasi->pengawasPagi->kordinator_id !== $kordinatorId) ||
+                            ($lokasi->pengawasSiang && $lokasi->pengawasSiang->kordinator_id !== $kordinatorId) ||
+                            ($lokasi->pengawasMalam && $lokasi->pengawasMalam->kordinator_id !== $kordinatorId);
+            if ($unauthorized) abort(403, 'Unauthorized.');
         }
 
-        $pengawasQuery = Pengawas::withExists('lokasi');
+        $pengawasQuery = Pengawas::withExists(['lokasiPagi', 'lokasiSiang', 'lokasiMalam']);
         if ($isKordinator) {
             $pengawasQuery->where('kordinator_id', $kordinatorId);
         }
@@ -167,8 +192,11 @@ class LokasiController extends Controller
         $isKordinator = $user->hasRole('kordinator');
         $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
 
-        if ($isKordinator && $lokasi->pengawas?->kordinator_id !== $kordinatorId) {
-            abort(403, 'Unauthorized.');
+        if ($isKordinator) {
+            $unauthorized = ($lokasi->pengawasPagi && $lokasi->pengawasPagi->kordinator_id !== $kordinatorId) ||
+                            ($lokasi->pengawasSiang && $lokasi->pengawasSiang->kordinator_id !== $kordinatorId) ||
+                            ($lokasi->pengawasMalam && $lokasi->pengawasMalam->kordinator_id !== $kordinatorId);
+            if ($unauthorized) abort(403, 'Unauthorized.');
         }
 
         $validated = $request->validate([
@@ -178,12 +206,20 @@ class LokasiController extends Controller
             'longitude'     => 'nullable|string',
             'type'          => 'nullable|string',
             'path'          => 'nullable|array',
-            'pengawas_id'   => 'nullable|uuid|exists:pengawas,id',
+            'pengawas_pagi_id'   => 'nullable|uuid|exists:pengawas,id',
+            'pengawas_siang_id'  => 'nullable|uuid|exists:pengawas,id',
+            'pengawas_malam_id'  => 'nullable|uuid|exists:pengawas,id',
         ]);
 
-        if ($isKordinator && !empty($validated['pengawas_id'])) {
-            $pengawas = Pengawas::find($validated['pengawas_id']);
-            if (!$pengawas || $pengawas->kordinator_id !== $kordinatorId) {
+        $pengawas_ids = array_filter([
+            $validated['pengawas_pagi_id'] ?? null, 
+            $validated['pengawas_siang_id'] ?? null, 
+            $validated['pengawas_malam_id'] ?? null
+        ]);
+        
+        if ($isKordinator && count($pengawas_ids) > 0) {
+            $invalidPengawas = Pengawas::whereIn('id', $pengawas_ids)->where('kordinator_id', '!=', $kordinatorId)->exists();
+            if ($invalidPengawas) {
                 abort(403, 'Unauthorized.');
             }
         }
@@ -199,8 +235,11 @@ class LokasiController extends Controller
         $isKordinator = $user->hasRole('kordinator');
         $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
 
-        if ($isKordinator && $lokasi->pengawas?->kordinator_id !== $kordinatorId) {
-            abort(403, 'Unauthorized.');
+        if ($isKordinator) {
+            $unauthorized = ($lokasi->pengawasPagi && $lokasi->pengawasPagi->kordinator_id !== $kordinatorId) ||
+                            ($lokasi->pengawasSiang && $lokasi->pengawasSiang->kordinator_id !== $kordinatorId) ||
+                            ($lokasi->pengawasMalam && $lokasi->pengawasMalam->kordinator_id !== $kordinatorId);
+            if ($unauthorized) abort(403, 'Unauthorized.');
         }
 
         $lokasi->delete();
@@ -225,7 +264,7 @@ class LokasiController extends Controller
 
     public function apiDetail($id)
     {
-        $lokasi = Lokasi::with(['pengawas.petugas'])->find($id);
+        $lokasi = Lokasi::with(['pengawasPagi.petugas', 'pengawasSiang.petugas', 'pengawasMalam.petugas'])->find($id);
 
         if (!$lokasi) {
             return response()->json(['message' => 'Lokasi tidak ditemukan'], 404);

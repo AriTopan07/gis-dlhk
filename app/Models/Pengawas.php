@@ -25,8 +25,18 @@ class Pengawas extends Model
         return $this->hasMany(Petugas::class);
     }
 
-    public function lokasi(): HasOne
+    public function lokasiPagi(): HasOne
     {
-        return $this->hasOne(Lokasi::class);
+        return $this->hasOne(Lokasi::class, 'pengawas_pagi_id');
+    }
+
+    public function lokasiSiang(): HasOne
+    {
+        return $this->hasOne(Lokasi::class, 'pengawas_siang_id');
+    }
+
+    public function lokasiMalam(): HasOne
+    {
+        return $this->hasOne(Lokasi::class, 'pengawas_malam_id');
     }
 }

@@ -18,7 +18,9 @@ class Lokasi extends Model
         'longitude',
         'type',
         'path',
-        'pengawas_id',
+        'pengawas_pagi_id',
+        'pengawas_siang_id',
+        'pengawas_malam_id',
     ];
 
     protected $casts = [
@@ -26,11 +28,27 @@ class Lokasi extends Model
     ];
 
     /**
-     * Get the supervisor (pengawas) assigned to this location.
+     * Get the supervisor (pengawas) assigned to this location for morning shift.
      */
-    public function pengawas(): BelongsTo
+    public function pengawasPagi(): BelongsTo
     {
-        return $this->belongsTo(Pengawas::class, 'pengawas_id');
+        return $this->belongsTo(Pengawas::class, 'pengawas_pagi_id');
+    }
+
+    /**
+     * Get the supervisor (pengawas) assigned to this location for afternoon shift.
+     */
+    public function pengawasSiang(): BelongsTo
+    {
+        return $this->belongsTo(Pengawas::class, 'pengawas_siang_id');
+    }
+
+    /**
+     * Get the supervisor (pengawas) assigned to this location for night shift.
+     */
+    public function pengawasMalam(): BelongsTo
+    {
+        return $this->belongsTo(Pengawas::class, 'pengawas_malam_id');
     }
 
     public function ulasan(): \Illuminate\Database\Eloquent\Relations\HasMany

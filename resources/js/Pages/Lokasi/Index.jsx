@@ -59,10 +59,19 @@ export default function Index({ lokasis, filters, stats }) {
         },
         {
             label: 'Pengawas (Mandor)',
-            key: 'pengawas',
-            render: (pengawas) => pengawas
-                ? <span className="font-medium text-emerald-700">{pengawas.nama}</span>
-                : <span className="text-slate-400 italic text-xs">Belum ditentukan</span>
+            key: 'pengawas', // Key doesn't perfectly map to single column now, but render receives row
+            render: (_, row) => {
+                const hasPengawas = row.pengawas_pagi || row.pengawas_siang || row.pengawas_malam;
+                if (!hasPengawas) return <span className="text-slate-400 italic text-xs">Belum ditentukan</span>;
+                
+                return (
+                    <div className="flex flex-col gap-1">
+                        {row.pengawas_pagi && <div className="text-xs"><span className="font-bold text-emerald-700">Pagi:</span> {row.pengawas_pagi.nama}</div>}
+                        {row.pengawas_siang && <div className="text-xs"><span className="font-bold text-blue-700">Siang:</span> {row.pengawas_siang.nama}</div>}
+                        {row.pengawas_malam && <div className="text-xs"><span className="font-bold text-indigo-700">Malam:</span> {row.pengawas_malam.nama}</div>}
+                    </div>
+                );
+            }
         }
     ];
 
