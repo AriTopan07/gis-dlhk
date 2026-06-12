@@ -18,8 +18,15 @@ return new class extends Migration
             }
             $table->renameColumn('pengawas_id', 'pengawas_pagi_id');
             
-            $table->foreignUuid('pengawas_siang_id')->nullable()->after('pengawas_id')->constrained('pengawas')->nullOnDelete();
-            $table->foreignUuid('pengawas_malam_id')->nullable()->after('pengawas_siang_id')->constrained('pengawas')->nullOnDelete();
+            $table->foreignUuid('pengawas_siang_id')
+                ->nullable()
+                ->constrained('pengawas')
+                ->nullOnDelete();
+            
+            $table->foreignUuid('pengawas_malam_id')
+                ->nullable()
+                ->constrained('pengawas')
+                ->nullOnDelete();
         });
         
         Schema::table('lokasis', function (Blueprint $table) {
