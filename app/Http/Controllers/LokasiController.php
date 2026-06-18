@@ -51,7 +51,7 @@ class LokasiController extends Controller
                         $q2->where('kordinator_id', $kordinatorId);
                     });
                 });
-        })->get(['kategori', 'type', 'path']);
+        })->get(['kategori', 'type', 'ukuran', 'path']);
 
         $totalLokasi = $statsLokasi->count();
         $totalJalan = $statsLokasi->where('kategori', 'jalan')->count();
@@ -82,21 +82,8 @@ class LokasiController extends Controller
         }
 
         $totalLuas = 0;
-        foreach ($statsLokasi->where('type', 'polygon') as $lok) {
-            $path = $lok->path;
-            if (is_array($path) && count($path) > 2) {
-                $area = 0;
-                $R = 6378137; // Earth radius in meters
-                for ($i = 0; $i < count($path); $i++) {
-                    $j = ($i + 1) % count($path);
-                    $lat1 = floatval($path[$i]['lat'] ?? 0) * pi() / 180;
-                    $lng1 = floatval($path[$i]['lng'] ?? 0) * pi() / 180;
-                    $lat2 = floatval($path[$j]['lat'] ?? 0) * pi() / 180;
-                    $lng2 = floatval($path[$j]['lng'] ?? 0) * pi() / 180;
-                    $area += ($lng2 - $lng1) * (2 + sin($lat1) + sin($lat2));
-                }
-                $totalLuas += abs($area * $R * $R / 2.0);
-            }
+        foreach ($statsLokasi->where('kategori', 'taman') as $lok) {
+            $totalLuas += floatval($lok->ukuran ?? 0);
         }
 
         return Inertia::render('Lokasi/Index', [

@@ -57,8 +57,12 @@ export default function Index({ lokasis, filters, stats }) {
         {
             data: 'type',
             name: 'type',
-            label: 'Panjang Jalan / Titik',
+            label: 'Panjang / Luas',
             render: function(data, type, row) {
+                if (row.kategori === 'taman') {
+                    const luas = row.ukuran ? formatArea(parseFloat(row.ukuran)) : '0 m²';
+                    return `<span class="text-orange-600 font-medium">${luas}</span>`;
+                }
                 if (data === 'line' && row.path && row.path.length > 0) {
                     const len = calculateLength(row.path);
                     return `<span class="text-blue-600 font-medium">${formatDistance(len)} (${row.path.length} titik)</span>`;
