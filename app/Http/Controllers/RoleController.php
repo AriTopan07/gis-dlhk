@@ -12,9 +12,14 @@ class RoleController extends Controller
     public function index()
     {
         return Inertia::render('Roles/Index', [
-            'roles' => Role::with('permissions')->paginate(10),
             'permissions' => Permission::all(),
         ]);
+    }
+
+    public function data(Request $request)
+    {
+        $query = Role::with('permissions');
+        return app('datatables')->of($query)->make(true);
     }
 
     public function store(Request $request)

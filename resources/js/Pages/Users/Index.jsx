@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage, useForm } from '@inertiajs/react';
-import DataTable from '@/Components/DataTable';
+import ServerSideDataTable from '@/Components/ServerSideDataTable';
 import Modal from '@/Components/Modal';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -10,7 +10,7 @@ import TextInput from '@/Components/TextInput';
 import Select from 'react-select';
 import { useState } from 'react';
 
-export default function Index({ users, roles }) {
+export default function Index({ roles }) {
     const roleOptions = roles.map(r => ({ value: r.name, label: r.name.toUpperCase() }));
 
     const selectStyles = {
@@ -68,21 +68,18 @@ export default function Index({ users, roles }) {
 
     // ── TABLE ─────────────────────────────────────────────────
     const columns = [
-        { label: 'Nama', key: 'name' },
-        { label: 'NIP', key: 'nip' },
-        { label: 'Email', key: 'email', render: (v) => v || <span className="text-slate-400 text-xs italic">-</span> },
+        { data: 'name', name: 'name', label: 'Nama' },
+        { data: 'nip', name: 'nip', label: 'NIP' },
+        { data: 'email', name: 'email', label: 'Email',
+            render: (v) => v || '<span class="text-slate-400 text-xs italic">-</span>'
+        },
         {
-            label: 'Role',
-            key: 'roles',
-            render: (roles) => (
-                <div className="flex flex-wrap gap-1">
-                    {roles.map(role => (
-                        <span key={role.id} className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-700 uppercase">
-                            {role.name}
-                        </span>
-                    ))}
-                </div>
-            )
+            data: 'roles', name: 'roles', label: 'Role',
+            orderable: false, searchable: false,
+            render: (roles) => {
+                if (!roles || !roles.length) return '-';
+                return roles.map(r => `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-700 uppercase">${r.name}</span>`).join(' ');
+            }
         },
     ];
 
@@ -167,8 +164,8 @@ export default function Index({ users, roles }) {
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <DataTable
-                        data={users}
+                    <ServerSideDataTable
+                        ajaxUrl={route('users.data')}
                         onEdit={openEdit}
                         routeDestroy="users.destroy"
                         columns={columns}

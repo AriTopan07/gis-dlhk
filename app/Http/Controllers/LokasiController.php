@@ -15,7 +15,6 @@ class LokasiController extends Controller
         $user = auth()->user();
         $isKordinator = $user->hasRole('kordinator');
         $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
-
         $lokasis = Lokasi::with(['pengawasPagi', 'pengawasSiang', 'pengawasMalam'])
             ->when($isKordinator, function ($query) use ($kordinatorId) {
                 return $query->where(function ($q) use ($kordinatorId) {
@@ -82,17 +81,58 @@ class LokasiController extends Controller
             }
         }
 
+        $totalLuas = 0;
+        foreach ($statsLokasi->where('type', 'polygon') as $lok) {
+            $path = $lok->path;
+            if (is_array($path) && count($path) > 2) {
+                $area = 0;
+                $R = 6378137; // Earth radius in meters
+                for ($i = 0; $i < count($path); $i++) {
+                    $j = ($i + 1) % count($path);
+                    $lat1 = floatval($path[$i]['lat'] ?? 0) * pi() / 180;
+                    $lng1 = floatval($path[$i]['lng'] ?? 0) * pi() / 180;
+                    $lat2 = floatval($path[$j]['lat'] ?? 0) * pi() / 180;
+                    $lng2 = floatval($path[$j]['lng'] ?? 0) * pi() / 180;
+                    $area += ($lng2 - $lng1) * (2 + sin($lat1) + sin($lat2));
+                }
+                $totalLuas += abs($area * $R * $R / 2.0);
+            }
+        }
+
         return Inertia::render('Lokasi/Index', [
             'lokasis'    => $lokasis,
             'filters'    => $request->only(['search']),
             'pengawas'   => $pengawas,
             'stats'      => [
-                'total' => $totalLokasi,
-                'jalan' => $totalJalan,
-                'taman' => $totalTaman,
+                'total'   => $totalLokasi,
+                'jalan'   => $totalJalan,
+                'taman'   => $totalTaman,
                 'panjang' => $totalPanjang,
+                'luas'    => $totalLuas,
             ]
         ]);
+    }
+
+    public function data(Request $request)
+    {
+        $user = auth()->user();
+        $isKordinator = $user->hasRole('kordinator');
+        $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
+
+        $query = Lokasi::with(['pengawasPagi', 'pengawasSiang', 'pengawasMalam'])
+            ->when($isKordinator, function ($q) use ($kordinatorId) {
+                return $q->where(function ($q1) use ($kordinatorId) {
+                    $q1->whereHas('pengawasPagi', function ($q2) use ($kordinatorId) {
+                        $q2->where('kordinator_id', $kordinatorId);
+                    })->orWhereHas('pengawasSiang', function ($q2) use ($kordinatorId) {
+                        $q2->where('kordinator_id', $kordinatorId);
+                    })->orWhereHas('pengawasMalam', function ($q2) use ($kordinatorId) {
+                        $q2->where('kordinator_id', $kordinatorId);
+                    });
+                });
+            });
+
+        return app('datatables')->of($query)->make(true);
     }
 
     public function create()
@@ -122,6 +162,7 @@ class LokasiController extends Controller
             'lokasis'              => 'required|array',
             'lokasis.*.lokasi'     => 'required|string',
             'lokasis.*.kategori'   => 'required|in:jalan,taman',
+            'lokasis.*.ukuran'     => 'nullable|string',
             'lokasis.*.latitude'   => 'nullable|string',
             'lokasis.*.longitude'  => 'nullable|string',
             'lokasis.*.type'       => 'nullable|string',
@@ -148,6 +189,7 @@ class LokasiController extends Controller
             Lokasi::create([
                 'lokasi'        => $item['lokasi'],
                 'kategori'      => $item['kategori'] ?? 'jalan',
+                'ukuran'        => $item['ukuran'] ?? null,
                 'type'          => $item['type'] ?? 'point',
                 'latitude'      => $item['latitude'] ?? null,
                 'longitude'     => $item['longitude'] ?? null,
@@ -202,6 +244,7 @@ class LokasiController extends Controller
         $validated = $request->validate([
             'lokasi'        => 'required|string',
             'kategori'      => 'required|in:jalan,taman',
+            'ukuran'        => 'nullable|string',
             'latitude'      => 'nullable|string',
             'longitude'     => 'nullable|string',
             'type'          => 'nullable|string',

@@ -8,11 +8,11 @@ import Select from 'react-select';
 
 export default function Create({ pengawas }) {
     const { data, setData, post, processing, errors } = useForm({
-        lokasis: [{ id: Date.now(), lokasi: '', kategori: 'jalan', latitude: '', longitude: '', type: 'point', path: [], pengawas_pagi_id: '', pengawas_siang_id: '', pengawas_malam_id: '' }],
+        lokasis: [{ id: Date.now(), lokasi: '', kategori: 'jalan', ukuran: '', latitude: '', longitude: '', type: 'point', path: [], pengawas_pagi_id: '', pengawas_siang_id: '', pengawas_malam_id: '' }],
     });
 
     const addLokasi = () => {
-        setData('lokasis', [...data.lokasis, { id: Date.now(), lokasi: '', kategori: 'jalan', latitude: '', longitude: '', type: 'point', path: [], pengawas_pagi_id: '', pengawas_siang_id: '', pengawas_malam_id: '' }]);
+        setData('lokasis', [...data.lokasis, { id: Date.now(), lokasi: '', kategori: 'jalan', ukuran: '', latitude: '', longitude: '', type: 'point', path: [], pengawas_pagi_id: '', pengawas_siang_id: '', pengawas_malam_id: '' }]);
     };
 
     const removeLokasi = (index) => {
@@ -94,6 +94,23 @@ export default function Create({ pengawas }) {
                                                 <InputError message={errors[`lokasis.${index}.kategori`]} className="mt-2" />
                                             )}
                                         </div>
+
+                                        {item.kategori === 'taman' && (
+                                            <div className="w-full flex flex-col">
+                                                <InputLabel htmlFor={`ukuran-${index}`} value={`Ukuran (Luas) Taman ${index + 1}`} />
+                                                <input
+                                                    id={`ukuran-${index}`}
+                                                    type="text"
+                                                    className="mt-1 block w-full border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                                    value={item.ukuran || ''}
+                                                    onChange={(e) => updateLokasiField(index, 'ukuran', e.target.value)}
+                                                    placeholder="Contoh: 1500 m2"
+                                                />
+                                                {errors[`lokasis.${index}.ukuran`] && (
+                                                    <InputError message={errors[`lokasis.${index}.ukuran`]} className="mt-2" />
+                                                )}
+                                            </div>
+                                        )}
 
                                         <div className="flex flex-col md:flex-row gap-4">
                                             <div className="flex-1">

@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage, useForm } from '@inertiajs/react';
-import DataTable from '@/Components/DataTable';
+import ServerSideDataTable from '@/Components/ServerSideDataTable';
 import Modal from '@/Components/Modal';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -10,7 +10,7 @@ import TextInput from '@/Components/TextInput';
 import { IconCheck } from '@tabler/icons-react';
 import { useState } from 'react';
 
-export default function Index({ roles, permissions }) {
+export default function Index({ permissions }) {
 
     // Group permissions by prefix (e.g. "view users" → group "users")
     const grouped = permissions.reduce((acc, perm) => {
@@ -62,33 +62,30 @@ export default function Index({ roles, permissions }) {
 
     // ── TABLE ─────────────────────────────────────────────────
     const columns = [
-        { label: 'Nama Role', key: 'name' },
+        { data: 'name', name: 'name', label: 'Nama Role' },
         {
-            label: 'Jumlah Permission',
-            key: 'permissions',
-            render: (perms) => (
-                <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-indigo-100 text-indigo-700">
-                    {perms.length} permission
-                </span>
-            )
+            data: 'permissions', name: 'permissions', label: 'Jumlah Permission',
+            orderable: false, searchable: false,
+            render: (perms) => {
+                if (!perms) return '0 permission';
+                return `<span class="px-2.5 py-1 text-xs font-bold rounded-full bg-indigo-100 text-indigo-700">${perms.length} permission</span>`;
+            }
         },
         {
-            label: 'Permissions',
-            key: 'permissions',
-            render: (perms) => (
-                <div className="flex flex-wrap gap-1 max-w-sm">
-                    {perms.slice(0, 5).map(p => (
-                        <span key={p.id} className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-600 uppercase">
-                            {p.name}
-                        </span>
-                    ))}
-                    {perms.length > 5 && (
-                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-200 text-slate-500">
-                            +{perms.length - 5} lainnya
-                        </span>
-                    )}
-                </div>
-            )
+            data: 'permissions', name: 'permissions_list', label: 'Permissions',
+            orderable: false, searchable: false,
+            render: (perms) => {
+                if (!perms || !perms.length) return '-';
+                let html = '<div class="flex flex-wrap gap-1 max-w-sm">';
+                perms.slice(0, 5).forEach(p => {
+                    html += `<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-600 uppercase">${p.name}</span>`;
+                });
+                if (perms.length > 5) {
+                    html += `<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-200 text-slate-500">+${perms.length - 5} lainnya</span>`;
+                }
+                html += '</div>';
+                return html;
+            }
         },
     ];
 
@@ -151,8 +148,8 @@ export default function Index({ roles, permissions }) {
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <DataTable
-                        data={roles}
+                    <ServerSideDataTable
+                        ajaxUrl={route('roles.data')}
                         onEdit={openEdit}
                         routeDestroy="roles.destroy"
                         columns={columns}

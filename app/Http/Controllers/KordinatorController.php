@@ -14,9 +14,13 @@ class KordinatorController extends Controller
 {
     public function index()
     {
-        return Inertia::render('Kordinators/Index', [
-            'kordinators' => Kordinator::with('user')->paginate(10),
-        ]);
+        return Inertia::render('Kordinators/Index');
+    }
+
+    public function data(Request $request)
+    {
+        $query = Kordinator::with('user');
+        return app('datatables')->of($query)->make(true);
     }
 
     public function create()

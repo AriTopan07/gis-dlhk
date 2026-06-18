@@ -10,6 +10,7 @@ export default function Edit({ lokasi, pengawas }) {
     const { data, setData, put, processing, errors } = useForm({
         lokasi: lokasi.lokasi || '',
         kategori: lokasi.kategori || 'jalan',
+        ukuran: lokasi.ukuran || '',
         latitude: lokasi.latitude || '',
         longitude: lokasi.longitude || '',
         type: lokasi.type || 'point',
@@ -89,6 +90,21 @@ export default function Edit({ lokasi, pengawas }) {
                                         />
                                         <InputError message={errors.kategori} className="mt-2" />
                                     </div>
+
+                                    {data.kategori === 'taman' && (
+                                        <div className="w-full flex flex-col">
+                                            <InputLabel htmlFor="ukuran" value="Ukuran (Luas) Taman" />
+                                            <input
+                                                id="ukuran"
+                                                type="text"
+                                                className="mt-1 block w-full border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                                value={data.ukuran || ''}
+                                                onChange={(e) => setData('ukuran', e.target.value)}
+                                                placeholder="Contoh: 1500 m2"
+                                            />
+                                            <InputError message={errors.ukuran} className="mt-2" />
+                                        </div>
+                                    )}
 
                                     <div className="flex flex-col md:flex-row gap-4">
                                         <div className="flex-1">

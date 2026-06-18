@@ -16,84 +16,69 @@ class UlasanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Ulasan::with(['user', 'kordinator.user', 'lokasi'])
-            ->orderBy('created_at', 'desc');
+        $query = \App\Models\Ulasan::query();
 
-        // Filter: Search (by name, komentar, or lokasi)
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('komentar', 'like', "%{$search}%")
-                  ->orWhereHas('kordinator.user', function ($q2) use ($search) {
-                      $q2->where('name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('kordinator', function ($q2) use ($search) {
-                      $q2->where('nama', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('lokasi', function ($q2) use ($search) {
-                      $q2->where('lokasi', 'like', "%{$search}%");
-                  });
-            });
-        }
-
-        // Filter: Rating
-        if ($request->filled('rating') && $request->rating !== 'all') {
-            $query->where('rating', $request->rating);
-        }
-
-        // Filter: Status
-        if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
-        }
-
-        // Filter: Lokasi
-        if ($request->filled('lokasi_id')) {
-            $query->where('lokasi_id', $request->lokasi_id);
-        }
-
-        // Clone query for stats before pagination
-        $statsQuery = clone $query;
-        $total = $statsQuery->count();
-        $sumRating = $statsQuery->sum('rating');
+        // Clone query for stats
+        $total = (clone $query)->count();
+        $sumRating = (clone $query)->sum('rating');
         $avg = $total > 0 ? number_format($sumRating / $total, 1) : 0;
-        
         $positive = (clone $query)->where('rating', '>=', 4)->count();
-        $negative = (clone $query)->where('rating', '<=', 3)->count();
         $pending = (clone $query)->where('status', 'menunggu')->count();
 
         $stats = [
             'total' => $total,
             'avg' => $avg,
             'positive' => $positive,
-            'negative' => $negative,
+            'negative' => (clone $query)->where('rating', '<=', 3)->count(),
             'pending' => $pending,
         ];
-
-        // Pagination
-        $ulasans = $query->paginate(15)->through(function ($ulasan) {
-            $nama = $ulasan->nama_pengulas ?? $ulasan->user->name ?? $ulasan->kordinator->user->name ?? $ulasan->kordinator->nama ?? 'Anonim';
-            return [
-                'id' => $ulasan->id,
-                'nama' => $nama,
-                'avatar' => 'https://ui-avatars.com/api/?name=' . urlencode($nama) . '&background=random',
-                'rating' => $ulasan->rating,
-                'komentar' => $ulasan->komentar,
-                'foto' => $ulasan->foto ? asset('storage/' . $ulasan->foto) : null,
-                'lokasi' => $ulasan->lokasi->lokasi ?? 'Unknown',
-                'tanggal' => \Carbon\Carbon::parse($ulasan->created_at)->translatedFormat('d F Y'),
-                'jam'     => \Carbon\Carbon::parse($ulasan->created_at)->format('H:i'),
-                'status' => $ulasan->status,
-            ];
-        });
 
         $lokasis = \App\Models\Lokasi::orderBy('lokasi', 'asc')->get(['id', 'lokasi']);
 
         return Inertia::render('Ulasan/Index', [
-            'ulasans' => $ulasans,
             'lokasis' => $lokasis,
             'stats'   => $stats,
-            'filters' => $request->only(['search', 'rating', 'status', 'lokasi_id']),
         ]);
+    }
+
+    public function data(Request $request)
+    {
+        $query = \App\Models\Ulasan::with(['user', 'kordinator.user', 'lokasi'])
+            ->orderBy('created_at', 'desc');
+
+        if ($request->filled('rating') && $request->rating !== 'all') {
+            $query->where('rating', $request->rating);
+        }
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('lokasi_id') && $request->lokasi_id !== 'null' && $request->lokasi_id !== '') {
+            $query->where('lokasi_id', $request->lokasi_id);
+        }
+
+        return app('datatables')->of($query)
+            ->addColumn('nama', function ($ulasan) {
+                return $ulasan->nama_pengulas ?? $ulasan->user->name ?? $ulasan->kordinator->user->name ?? $ulasan->kordinator->nama ?? 'Anonim';
+            })
+            ->addColumn('avatar', function ($ulasan) {
+                $nama = $ulasan->nama_pengulas ?? $ulasan->user->name ?? $ulasan->kordinator->user->name ?? $ulasan->kordinator->nama ?? 'Anonim';
+                return 'https://ui-avatars.com/api/?name=' . urlencode($nama) . '&background=random';
+            })
+            ->addColumn('lokasi_nama', function ($ulasan) {
+                return $ulasan->lokasi->lokasi ?? 'Unknown';
+            })
+            ->addColumn('foto_url', function ($ulasan) {
+                return $ulasan->foto ? asset('storage/' . $ulasan->foto) : null;
+            })
+            ->addColumn('tanggal', function ($ulasan) {
+                return \Carbon\Carbon::parse($ulasan->created_at)->translatedFormat('d F Y');
+            })
+            ->addColumn('jam', function ($ulasan) {
+                return \Carbon\Carbon::parse($ulasan->created_at)->format('H:i');
+            })
+            ->make(true);
     }
 
     public function export(Request $request)

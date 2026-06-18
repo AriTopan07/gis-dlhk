@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage, useForm, router } from '@inertiajs/react';
-import DataTable from '@/Components/DataTable';
+import ServerSideDataTable from '@/Components/ServerSideDataTable';
 import Modal from '@/Components/Modal';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -8,10 +8,11 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import Select from 'react-select';
+import { IconSunrise, IconSun, IconMoonStars } from '@tabler/icons-react';
 
 import { useState } from 'react';
 
-export default function Index({ petugas, pengawas_list, kordinator_list, filters }) {
+export default function Index({ pengawas_list, kordinator_list }) {
     const { flash } = usePage().props;
 
     // ── CREATE ───────────────────────────────────────────────
@@ -48,28 +49,43 @@ export default function Index({ petugas, pengawas_list, kordinator_list, filters
     };
 
     const shiftOptions = [
-        { value: 'pagi',   label: '🌅 Pagi' },
-        { value: 'siang',  label: '☀️ Siang' },
-        { value: 'malam',  label: '🌙 Malam' },
+        { value: 'pagi',   label: 'Pagi' },
+        { value: 'siang',  label: 'Siang' },
+        { value: 'malam',  label: 'Malam' },
     ];
 
     const shiftBadge = (shift) => {
         if (!shift) return <span className="text-slate-400 text-xs italic">-</span>;
         const map = { pagi: 'bg-amber-50 text-amber-700', siang: 'bg-blue-50 text-blue-700', malam: 'bg-indigo-50 text-indigo-700' };
-        const label = { pagi: '🌅 Pagi', siang: '☀️ Siang', malam: '🌙 Malam' };
-        return <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${map[shift]}`}>{label[shift]}</span>;
+        const icons = { 
+            pagi: <IconSunrise size={14} className="mr-1" />, 
+            siang: <IconSun size={14} className="mr-1" />, 
+            malam: <IconMoonStars size={14} className="mr-1" /> 
+        };
+        const label = { pagi: 'Pagi', siang: 'Siang', malam: 'Malam' };
+        return (
+            <span className={`inline-flex items-center text-[11px] font-bold px-2.5 py-0.5 rounded-full ${map[shift]}`}>
+                {icons[shift]}
+                {label[shift]}
+            </span>
+        );
     };
 
-    // ── TABLE ────────────────────────────────────────────────
     const columns = [
-        { label: 'Nama', key: 'nama' },
-        { label: 'NIK KTP', key: 'nik_ktp', render: (v) => v || <span className="text-slate-400 text-xs italic">-</span> },
-        { label: 'NIP',     key: 'nip',     render: (v) => v || <span className="text-slate-400 text-xs italic">-</span> },
-        { label: 'Shift',   key: 'shift',   render: (v) => shiftBadge(v) },
+        { data: 'nama', name: 'nama', label: 'Nama' },
+        { data: 'nik_ktp', name: 'nik_ktp', label: 'NIK KTP',
+            render: (v) => v || '<span class="text-slate-400 text-xs italic">-</span>'
+        },
+        { data: 'nip', name: 'nip', label: 'NIP',
+            render: (v) => v || '<span class="text-slate-400 text-xs italic">-</span>'
+        },
+        { data: 'shift', name: 'shift', label: 'Shift',
+            render: (shift) => shiftBadge(shift)
+        },
         {
-            label: 'Pengawas (Mandor)',
-            key: 'pengawas',
-            render: (pengawas) => pengawas ? pengawas.nama : <span className="text-slate-400 text-xs italic">-</span>
+            data: 'pengawas', name: 'pengawas.nama', label: 'Pengawas (Mandor)',
+            orderable: false, searchable: false,
+            render: (pengawas) => pengawas ? pengawas.nama : '<span class="text-slate-400 text-xs italic">-</span>'
         }
     ];
 
@@ -87,39 +103,9 @@ export default function Index({ petugas, pengawas_list, kordinator_list, filters
         menuPortal: (base) => ({ ...base, zIndex: 9999 }),
     };
 
-    const [filterKordinator, setFilterKordinator] = useState(filters?.kordinator_id || '');
-    const [filterPengawas, setFilterPengawas] = useState(filters?.pengawas_id || '');
 
-    const handleFilterChange = (key, value) => {
-        if (key === 'kordinator_id') {
-            setFilterKordinator(value);
-            // reset pengawas if kordinator changes
-            setFilterPengawas('');
-        } else {
-            setFilterPengawas(value);
-        }
 
-        const currentParams = new URLSearchParams(window.location.search);
-        
-        if (value) {
-            currentParams.set(key, value);
-        } else {
-            currentParams.delete(key);
-        }
-        
-        if (key === 'kordinator_id') {
-            currentParams.delete('pengawas_id'); // always clear pengawas when kordinator changes
-        }
-
-        router.get(window.location.pathname, Object.fromEntries(currentParams.entries()), { preserveState: true, replace: true });
-    };
-
-    const kordinatorOptions = kordinator_list?.map(k => ({ value: k.id, label: k.nama })) || [];
-    // Filter pengawasOptions if a kordinator is selected
-    const filteredPengawasList = filterKordinator 
-        ? pengawas_list.filter(p => p.kordinator_id === filterKordinator) 
-        : pengawas_list;
-    const pengawasOptions = filteredPengawasList.map(p => ({ value: p.id, label: p.nama }));
+    const pengawasOptions = pengawas_list?.map(p => ({ value: p.id, label: p.nama })) || [];
 
     return (
         <AuthenticatedLayout
@@ -141,37 +127,11 @@ export default function Index({ petugas, pengawas_list, kordinator_list, filters
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <DataTable
-                        data={petugas}
+                    <ServerSideDataTable
+                        ajaxUrl={route('petugas.data')}
                         onEdit={openEditModal}
                         routeDestroy="petugas.destroy"
                         columns={columns}
-                        filters={filters}
-                        filterSlot={
-                            <div className="flex gap-2 w-full sm:w-auto">
-                                <div className="w-40 sm:w-48">
-                                    <Select
-                                        options={kordinatorOptions}
-                                        value={kordinatorOptions.find(o => o.value === filterKordinator) || null}
-                                        onChange={(opt) => handleFilterChange('kordinator_id', opt ? opt.value : '')}
-                                        placeholder="Semua Kordinator"
-                                        isClearable
-                                        styles={selectStyles}
-                                    />
-                                </div>
-                                <div className="w-40 sm:w-48">
-                                    <Select
-                                        options={pengawasOptions}
-                                        value={pengawasOptions.find(o => o.value === filterPengawas) || null}
-                                        onChange={(opt) => handleFilterChange('pengawas_id', opt ? opt.value : '')}
-                                        placeholder="Semua Pengawas"
-                                        isClearable
-                                        styles={selectStyles}
-                                        isDisabled={filterKordinator && pengawasOptions.length === 0}
-                                    />
-                                </div>
-                            </div>
-                        }
                     />
                 </div>
             </div>

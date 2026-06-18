@@ -14,6 +14,7 @@ class Lokasi extends Model
     protected $fillable = [
         'lokasi',
         'kategori',
+        'ukuran',
         'latitude',
         'longitude',
         'type',

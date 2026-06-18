@@ -32,20 +32,27 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
+    Route::get('/lokasi/data', [App\Http\Controllers\LokasiController::class, 'data'])->name('lokasi.data');
     Route::resource('lokasi', App\Http\Controllers\LokasiController::class);
+    Route::get('/users/data', [App\Http\Controllers\UserController::class, 'data'])->name('users.data');
     Route::resource('users', App\Http\Controllers\UserController::class);
+    Route::get('/roles/data', [App\Http\Controllers\RoleController::class, 'data'])->name('roles.data');
     Route::resource('roles', App\Http\Controllers\RoleController::class);
+    Route::get('/kordinators/data', [App\Http\Controllers\KordinatorController::class, 'data'])->name('kordinators.data');
     Route::resource('kordinators', App\Http\Controllers\KordinatorController::class);
+    Route::get('/pengawas/data', [App\Http\Controllers\PengawasController::class, 'data'])->name('pengawas.data');
     Route::resource('pengawas', App\Http\Controllers\PengawasController::class)->parameters(['pengawas' => 'pengawas']);
+    Route::get('/petugas/data', [App\Http\Controllers\PetugasController::class, 'data'])->name('petugas.data');
     Route::resource('petugas', App\Http\Controllers\PetugasController::class)->parameters(['petugas' => 'petugas']);
     Route::get('/petugas/template/download', [App\Http\Controllers\PetugasController::class, 'downloadTemplate'])->name('petugas.template');
     
     // Ulasan (Reviews) - Other methods are auth protected
     Route::get('/ulasan', [App\Http\Controllers\UlasanController::class, 'index'])->name('ulasan.index');
     Route::get('/ulasan/export', [App\Http\Controllers\UlasanController::class, 'export'])->name('ulasan.export');
-    Route::put('/ulasan/{ulasan}', [App\Http\Controllers\UlasanController::class, 'update'])->name('ulasan.update');
+    Route::get('/ulasan/data', [App\Http\Controllers\UlasanController::class, 'data'])->name('ulasan.data');
+    Route::get('/ulasan/export', [App\Http\Controllers\UlasanController::class, 'export'])->name('ulasan.export');
     Route::delete('/ulasan/reset', [App\Http\Controllers\UlasanController::class, 'reset'])->name('ulasan.reset');
-    Route::delete('/ulasan/{ulasan}', [App\Http\Controllers\UlasanController::class, 'destroy'])->name('ulasan.destroy');
+    Route::resource('ulasan', App\Http\Controllers\UlasanController::class)->only(['index', 'store', 'update', 'destroy'])->parameters(['ulasan' => 'ulasan']);
 
     // Import Data Hierarki
     Route::get('/import', [App\Http\Controllers\ImportController::class, 'index'])->name('import.index');

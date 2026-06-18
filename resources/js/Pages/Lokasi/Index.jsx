@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, usePage } from '@inertiajs/react';
-import DataTable from '@/Components/DataTable';
-import { IconMapPin, IconRoad, IconTree, IconRulerMeasure } from '@tabler/icons-react';
+import ServerSideDataTable from '@/Components/ServerSideDataTable';
+import { IconMapPin, IconRoad, IconTree, IconRulerMeasure, IconMaximize } from '@tabler/icons-react';
 
 export default function Index({ lokasis, filters, stats }) {
     const { flash } = usePage().props;
@@ -35,44 +35,55 @@ export default function Index({ lokasis, filters, stats }) {
         return Math.round(meters) + ' m';
     };
 
+    const formatArea = (area) => {
+        if (!area) return "0 m²";
+        if (area > 1000000) return (area / 1000000).toFixed(2) + " km²";
+        if (area > 10000) return (area / 10000).toFixed(2) + " Ha";
+        return Math.round(area).toLocaleString('id-ID') + " m²";
+    };
+
     const columns = [
-        { label: 'Lokasi', key: 'lokasi' },
+        { data: 'lokasi', name: 'lokasi', label: 'Lokasi' },
         { 
+            data: 'kategori', 
+            name: 'kategori',
             label: 'Kategori', 
-            key: 'kategori',
-            render: (kategori) => (
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${kategori === 'taman' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
-                    {kategori || 'Jalan'}
-                </span>
-            )
+            render: function(data) {
+                const color = data === 'taman' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200';
+                const label = data || 'Jalan';
+                return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${color}">${label}</span>`;
+            }
         },
         {
+            data: 'type',
+            name: 'type',
             label: 'Panjang Jalan / Titik',
-            key: 'type',
-            render: (type, row) => {
-                if (type === 'line' && row.path && row.path.length > 0) {
+            render: function(data, type, row) {
+                if (data === 'line' && row.path && row.path.length > 0) {
                     const len = calculateLength(row.path);
-                    return <span className="text-blue-600 font-medium">{formatDistance(len)} ({row.path.length} titik)</span>;
+                    return `<span class="text-blue-600 font-medium">${formatDistance(len)} (${row.path.length} titik)</span>`;
                 }
-                return <span className="text-slate-500">Titik Tunggal</span>;
+                return '<span class="text-slate-500">Titik Tunggal</span>';
             }
         },
         {
+            data: 'pengawas',
+            name: 'pengawas',
             label: 'Pengawas (Mandor)',
-            key: 'pengawas', // Key doesn't perfectly map to single column now, but render receives row
-            render: (_, row) => {
+            orderable: false,
+            searchable: false,
+            render: function(data, type, row) {
                 const hasPengawas = row.pengawas_pagi || row.pengawas_siang || row.pengawas_malam;
-                if (!hasPengawas) return <span className="text-slate-400 italic text-xs">Belum ditentukan</span>;
+                if (!hasPengawas) return '<span class="text-slate-400 italic text-xs">Belum ditentukan</span>';
                 
-                return (
-                    <div className="flex flex-col gap-1">
-                        {row.pengawas_pagi && <div className="text-xs"><span className="font-bold text-emerald-700">Pagi:</span> {row.pengawas_pagi.nama}</div>}
-                        {row.pengawas_siang && <div className="text-xs"><span className="font-bold text-blue-700">Siang:</span> {row.pengawas_siang.nama}</div>}
-                        {row.pengawas_malam && <div className="text-xs"><span className="font-bold text-indigo-700">Malam:</span> {row.pengawas_malam.nama}</div>}
-                    </div>
-                );
+                let html = '<div class="flex flex-col gap-1">';
+                if (row.pengawas_pagi) html += `<div class="text-xs"><span class="font-bold text-emerald-700">Pagi:</span> ${row.pengawas_pagi.nama}</div>`;
+                if (row.pengawas_siang) html += `<div class="text-xs"><span class="font-bold text-blue-700">Siang:</span> ${row.pengawas_siang.nama}</div>`;
+                if (row.pengawas_malam) html += `<div class="text-xs"><span class="font-bold text-indigo-700">Malam:</span> ${row.pengawas_malam.nama}</div>`;
+                html += '</div>';
+                return html;
             }
-        }
+        },
     ];
 
     return (
@@ -97,7 +108,7 @@ export default function Index({ lokasis, filters, stats }) {
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
 
                     {stats && (
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
                             <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center">
                                     <IconMapPin className="text-indigo-600" size={24} stroke={2} />
@@ -137,12 +148,20 @@ export default function Index({ lokasis, filters, stats }) {
                                     <div className="text-2xl font-black text-slate-800 mt-1">{formatDistance(stats.panjang)}</div>
                                 </div>
                             </div>
+                            <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center">
+                                    <IconMaximize className="text-orange-600" size={24} stroke={2} />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">Total Luas Taman</div>
+                                    <div className="text-2xl font-black text-slate-800 mt-1">{formatArea(stats.luas)}</div>
+                                </div>
+                            </div>
                         </div>
                     )}
                     
-                    <DataTable 
-                        data={lokasis}
-                        filters={filters}
+                    <ServerSideDataTable 
+                        ajaxUrl={route('lokasi.data')}
                         routeEdit="lokasi.edit"
                         routeDestroy="lokasi.destroy"
                         columns={columns}

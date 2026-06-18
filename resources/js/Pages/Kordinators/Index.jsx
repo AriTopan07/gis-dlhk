@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage, useForm } from '@inertiajs/react';
-import DataTable from '@/Components/DataTable';
+import ServerSideDataTable from '@/Components/ServerSideDataTable';
 import Modal from '@/Components/Modal';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -9,7 +9,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { useState } from 'react';
 
-export default function Index({ kordinators }) {
+export default function Index() {
     const { flash } = usePage().props;
 
     // ── SHARED STYLES ─────────────────────────────────────────
@@ -56,16 +56,16 @@ export default function Index({ kordinators }) {
 
     // ── TABLE ─────────────────────────────────────────────────
     const columns = [
-        { label: 'Nama', key: 'nama' },
+        { data: 'nama', name: 'nama', label: 'Nama' },
         {
-            label: 'NIP',
-            key: 'user',
-            render: (user) => user?.nip || <span className="text-slate-400 italic text-xs">-</span>
+            data: 'user', name: 'user.nip', label: 'NIP',
+            orderable: false, searchable: false,
+            render: (user) => user?.nip || '<span class="text-slate-400 italic text-xs">-</span>'
         },
         {
-            label: 'Akun / Email',
-            key: 'user',
-            render: (user) => user?.email || <span className="text-slate-400 italic text-xs">Belum ditautkan</span>
+            data: 'user', name: 'user.email', label: 'Akun / Email',
+            orderable: false, searchable: false,
+            render: (user) => user?.email || '<span class="text-slate-400 italic text-xs">Belum ditautkan</span>'
         },
     ];
 
@@ -126,8 +126,8 @@ export default function Index({ kordinators }) {
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <DataTable
-                        data={kordinators}
+                    <ServerSideDataTable
+                        ajaxUrl={route('kordinators.data')}
                         onEdit={openEditModal}
                         routeDestroy="kordinators.destroy"
                         columns={columns}

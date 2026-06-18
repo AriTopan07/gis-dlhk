@@ -14,9 +14,14 @@ class UserController extends Controller
     public function index()
     {
         return Inertia::render('Users/Index', [
-            'users' => User::with('roles')->paginate(10),
             'roles' => Role::orderBy('name')->get(['id', 'name']),
         ]);
+    }
+
+    public function data(Request $request)
+    {
+        $query = User::with('roles');
+        return app('datatables')->of($query)->make(true);
     }
 
     public function create()

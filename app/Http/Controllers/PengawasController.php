@@ -15,21 +15,6 @@ class PengawasController extends Controller
         $isKordinator = $user->hasRole('kordinator');
         $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
 
-        $query = Pengawas::with('kordinator');
-
-        if ($isKordinator) {
-            $query->where('kordinator_id', $kordinatorId);
-        }
-
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where('nama', 'like', "%{$search}%");
-        }
-
-        if ($request->filled('kordinator_id')) {
-            $query->where('kordinator_id', $request->kordinator_id);
-        }
-
         $kordinatorsQuery = Kordinator::query();
         if ($isKordinator) {
             $kordinatorsQuery->where('id', $kordinatorId);
@@ -37,10 +22,23 @@ class PengawasController extends Controller
         $kordinators = $kordinatorsQuery->get();
 
         return Inertia::render('Pengawas/Index', [
-            'pengawas' => $query->latest()->paginate(10)->withQueryString(),
             'kordinators' => $kordinators,
-            'filters' => $request->only(['search', 'kordinator_id']),
         ]);
+    }
+
+    public function data(Request $request)
+    {
+        $user = auth()->user();
+        $isKordinator = $user->hasRole('kordinator');
+        $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
+
+        $query = Pengawas::with('kordinator');
+
+        if ($isKordinator) {
+            $query->where('kordinator_id', $kordinatorId);
+        }
+
+        return app('datatables')->of($query)->make(true);
     }
 
     public function create()

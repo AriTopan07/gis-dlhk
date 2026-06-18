@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage, useForm, router } from '@inertiajs/react';
-import DataTable from '@/Components/DataTable';
+import ServerSideDataTable from '@/Components/ServerSideDataTable';
 import Modal from '@/Components/Modal';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -8,23 +8,11 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import Select from 'react-select';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
-export default function Index({ pengawas, kordinators, filters }) {
-    const { flash } = usePage().props;
+export default function Index({ kordinators }) {
 
-    const [filterKordinator, setFilterKordinator] = useState(filters?.kordinator_id || '');
 
-    const handleFilterChange = (kordinator_id) => {
-        setFilterKordinator(kordinator_id);
-        const currentParams = new URLSearchParams(window.location.search);
-        if (kordinator_id) {
-            currentParams.set('kordinator_id', kordinator_id);
-        } else {
-            currentParams.delete('kordinator_id');
-        }
-        router.get(window.location.pathname, Object.fromEntries(currentParams.entries()), { preserveState: true, replace: true });
-    };
 
     const kordinatorOptions = kordinators.map(k => ({ value: k.id, label: k.nama }));
 
@@ -74,12 +62,14 @@ export default function Index({ pengawas, kordinators, filters }) {
 
     // ── TABLE ─────────────────────────────────────────────────
     const columns = [
-        { label: 'Nama', key: 'nama' },
-        { label: 'NIP', key: 'nip', render: (n) => n || <span className="text-slate-400 italic text-xs">-</span> },
+        { data: 'nama', name: 'nama', label: 'Nama' },
+        { data: 'nip', name: 'nip', label: 'NIP',
+            render: (v) => v || '<span class="text-slate-400 italic text-xs">-</span>'
+        },
         {
-            label: 'Kordinator',
-            key: 'kordinator',
-            render: (k) => k ? k.nama : <span className="text-slate-400 italic text-xs">-</span>
+            data: 'kordinator', name: 'kordinator.nama', label: 'Kordinator',
+            orderable: false, searchable: false,
+            render: (k) => k ? k.nama : '<span class="text-slate-400 italic text-xs">-</span>'
         },
     ];
 
@@ -101,24 +91,11 @@ export default function Index({ pengawas, kordinators, filters }) {
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <DataTable
-                        data={pengawas}
+                    <ServerSideDataTable
+                        ajaxUrl={route('pengawas.data')}
                         onEdit={openEditModal}
                         routeDestroy="pengawas.destroy"
                         columns={columns}
-                        filters={filters}
-                        filterSlot={
-                            <div className="w-48 sm:w-64">
-                                <Select
-                                    options={kordinatorOptions}
-                                    value={kordinatorOptions.find(o => o.value === filterKordinator) || null}
-                                    onChange={(opt) => handleFilterChange(opt ? opt.value : '')}
-                                    placeholder="Semua Kordinator"
-                                    isClearable
-                                    styles={selectStyles}
-                                />
-                            </div>
-                        }
                     />
                 </div>
             </div>

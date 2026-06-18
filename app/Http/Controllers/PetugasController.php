@@ -18,33 +18,6 @@ class PetugasController extends Controller
         $isKordinator = $user->hasRole('kordinator');
         $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
 
-        $query = Petugas::with('pengawas.kordinator');
-
-        if ($isKordinator) {
-            $query->whereHas('pengawas', function ($q) use ($kordinatorId) {
-                $q->where('kordinator_id', $kordinatorId);
-            });
-        }
-
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('nik_ktp', 'like', "%{$search}%")
-                  ->orWhere('nip', 'like', "%{$search}%");
-            });
-        }
-        
-        if ($request->filled('pengawas_id')) {
-            $query->where('pengawas_id', $request->pengawas_id);
-        }
-
-        if ($request->filled('kordinator_id')) {
-            $query->whereHas('pengawas', function($q) use ($request) {
-                $q->where('kordinator_id', $request->kordinator_id);
-            });
-        }
-
         $pengawasQuery = Pengawas::query();
         if ($isKordinator) {
             $pengawasQuery->where('kordinator_id', $kordinatorId);
@@ -58,11 +31,26 @@ class PetugasController extends Controller
         $kordinator_list = $kordinatorsQuery->get();
 
         return Inertia::render('Petugas/Index', [
-            'petugas' => $query->latest()->paginate(10)->withQueryString(),
             'pengawas_list' => $pengawas_list,
             'kordinator_list' => $kordinator_list,
-            'filters' => $request->only(['search', 'pengawas_id', 'kordinator_id']),
         ]);
+    }
+
+    public function data(Request $request)
+    {
+        $user = auth()->user();
+        $isKordinator = $user->hasRole('kordinator');
+        $kordinatorId = $isKordinator ? $user->kordinator?->id : null;
+
+        $query = Petugas::with('pengawas.kordinator');
+
+        if ($isKordinator) {
+            $query->whereHas('pengawas', function ($q) use ($kordinatorId) {
+                $q->where('kordinator_id', $kordinatorId);
+            });
+        }
+
+        return app('datatables')->of($query)->make(true);
     }
 
     public function create()

@@ -64,7 +64,7 @@ class UlasanExport implements FromQuery, WithHeadings, WithMapping, WithStyles, 
         return [
             'No',
             'Nama',
-            'Lokasi TPS',
+            'Lokasi',
             'Rating',
             'Komentar',
             'Tanggal',

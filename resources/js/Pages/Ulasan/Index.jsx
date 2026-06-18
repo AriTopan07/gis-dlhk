@@ -18,7 +18,7 @@ import {
     IconDownload,
     IconRefresh,
 } from '@tabler/icons-react';
-import Pagination from '@/Components/Pagination';
+import ServerSideDataTable from '@/Components/ServerSideDataTable';
 
 // ── Bintang mini ─────────────────────────────────────────
 const StarRow = ({ rating }) => (
@@ -56,7 +56,6 @@ export default function Index({ ulasans: initialUlasans, lokasis, stats, filters
     const isKordinator = auth.user.roles?.includes('kordinator');
     const isAdminOrSuper = auth.user.roles?.includes('admin') || auth.user.roles?.includes('superadmin');
 
-    const [ulasans, setUlasans] = useState(initialUlasans);
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [selectedRating, setSelectedRating] = useState(filters?.rating || 'all');
     const [selectedStatus, setSelectedStatus] = useState(filters?.status || 'all');
@@ -78,19 +77,9 @@ export default function Index({ ulasans: initialUlasans, lokasis, stats, filters
         komentar: '',
     });
 
-    useEffect(() => { setUlasans(initialUlasans); }, [initialUlasans]);
+    const [ulasans, setUlasans] = useState({ data: [], total: 0 }); // Fallback for stats and reset data using it
 
-    useEffect(() => {
-        const t = setTimeout(() => {
-            router.get(route('ulasan.index'), {
-                search: searchTerm,
-                rating: selectedRating,
-                status: selectedStatus,
-                lokasi_id: selectedLokasi || '',
-            }, { preserveState: true, preserveScroll: true, replace: true });
-        }, 400);
-        return () => clearTimeout(t);
-    }, [searchTerm, selectedRating, selectedStatus, selectedLokasi]);
+
 
     const submitReview = (e) => {
         e.preventDefault();
@@ -102,10 +91,9 @@ export default function Index({ ulasans: initialUlasans, lokasis, stats, filters
     const handleStatusChange = (id, newStatus) => {
         router.put(route('ulasan.update', id), { status: newStatus }, {
             preserveScroll: true,
-            onSuccess: () => setUlasans(prev => ({
-                ...prev,
-                data: prev.data.map(u => u.id === id ? { ...u, status: newStatus } : u)
-            }))
+            onSuccess: () => {
+                window.location.reload();
+            }
         });
     };
 
@@ -122,10 +110,9 @@ export default function Index({ ulasans: initialUlasans, lokasis, stats, filters
             onSuccess: () => {
                 setIsDeleteModalOpen(false);
                 setItemToDelete(null);
-                setUlasans(prev => ({
-                    ...prev,
-                    data: prev.data.filter(u => u.id !== itemToDelete)
-                }));
+                // The table will auto refresh via router navigation if we use ServerSideDataTable's internal fetch
+                // We will rely on inertia reloading for simplicity or a manual table refresh if we had a ref
+                window.location.reload(); 
             },
             onFinish: () => setIsDeleting(false)
         });
@@ -147,12 +134,9 @@ export default function Index({ ulasans: initialUlasans, lokasis, stats, filters
         });
     };
 
-    const displayUlasans = ulasans.data || [];
-
-    const hasActiveFilter = searchTerm || selectedRating !== 'all' || selectedStatus !== 'all' || selectedLokasi;
+    const hasActiveFilter = selectedRating !== 'all' || selectedStatus !== 'all' || selectedLokasi;
 
     const handleReset = () => {
-        setSearchTerm('');
         setSelectedRating('all');
         setSelectedStatus('all');
         setSelectedLokasi(null);
@@ -160,7 +144,6 @@ export default function Index({ ulasans: initialUlasans, lokasis, stats, filters
 
     const buildExportUrl = () => {
         const params = new URLSearchParams();
-        if (searchTerm) params.set('search', searchTerm);
         if (selectedRating && selectedRating !== 'all') params.set('rating', selectedRating);
         if (selectedStatus && selectedStatus !== 'all') params.set('status', selectedStatus);
         if (selectedLokasi) params.set('lokasi_id', selectedLokasi);
@@ -179,6 +162,113 @@ export default function Index({ ulasans: initialUlasans, lokasis, stats, filters
         }),
         menuPortal: (b) => ({ ...b, zIndex: 9999 }),
     };
+
+    const columns = [
+        {
+            data: 'nama',
+            name: 'nama_pengulas',
+            label: 'Nama',
+            render: (value, type, row) => (
+                <div className="flex items-center gap-2.5">
+                    <img
+                        src={row.avatar}
+                        alt={value}
+                        className="w-8 h-8 rounded-full object-cover ring-2 ring-emerald-100 shrink-0"
+                    />
+                    <span className="font-semibold text-slate-800 whitespace-nowrap">{value}</span>
+                </div>
+            )
+        },
+        {
+            data: 'lokasi_nama',
+            name: 'lokasi.lokasi',
+            label: 'Lokasi',
+            render: (value) => (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full whitespace-nowrap max-w-[180px] truncate">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                    {value}
+                </span>
+            )
+        },
+        {
+            data: 'rating',
+            name: 'rating',
+            label: 'Rating',
+            render: (value) => <StarRow rating={value} />
+        },
+        {
+            data: 'komentar',
+            name: 'komentar',
+            label: 'Komentar',
+            render: (value) => (
+                <div className="max-w-xs">
+                    <p className="text-slate-600 text-xs leading-relaxed line-clamp-2">
+                        {value || <span className="text-slate-300 italic">— tidak ada komentar —</span>}
+                    </p>
+                </div>
+            )
+        },
+        {
+            data: 'tanggal',
+            name: 'created_at',
+            label: 'Tanggal',
+            render: (value, type, row) => (
+                <div className="whitespace-nowrap">
+                    <p className="text-xs text-slate-600 font-medium">{value}</p>
+                    <p className="text-[10px] text-slate-400">{row.jam} WIB</p>
+                </div>
+            )
+        },
+        {
+            data: 'status',
+            name: 'status',
+            label: 'Status',
+            render: (value, type, row) => isAdminOrSuper ? (
+                <div className="relative">
+                    <select
+                        className={`appearance-none text-[10px] font-extrabold uppercase tracking-wider pl-2.5 pr-6 py-1 rounded-full border-none focus:ring-0 cursor-pointer outline-none ${value === 'disetujui' ? 'bg-emerald-50 text-emerald-700' :
+                                value === 'ditolak' ? 'bg-red-50 text-red-700' :
+                                    'bg-amber-50 text-amber-700'
+                            }`}
+                        value={value}
+                        onChange={(e) => handleStatusChange(row.id, e.target.value)}
+                    >
+                        <option value="disetujui">Disetujui</option>
+                        <option value="menunggu">Menunggu</option>
+                        <option value="ditolak">Ditolak</option>
+                    </select>
+                </div>
+            ) : (
+                <StatusBadge status={value} />
+            )
+        }
+    ];
+
+    const ulasanActions = (item) => (
+        <div className="flex items-center justify-center gap-1.5">
+            {item.foto_url && (
+                <button
+                    onClick={() => setSelectedPhoto(item.foto_url)}
+                    title="Lihat Foto"
+                    className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                    <IconPhoto size={15} stroke={2} />
+                </button>
+            )}
+            {isAdminOrSuper && (
+                <button
+                    onClick={() => confirmDelete(item.id)}
+                    title="Hapus Ulasan"
+                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                    <IconTrash size={15} stroke={2} />
+                </button>
+            )}
+            {!item.foto_url && !isAdminOrSuper && (
+                <span className="text-slate-300 text-xs italic">—</span>
+            )}
+        </div>
+    );
 
     return (
         <AuthenticatedLayout
@@ -245,230 +335,83 @@ export default function Index({ ulasans: initialUlasans, lokasis, stats, filters
                         ))}
                     </div>
 
-                    {/* ── FILTER BAR ───────────────────────────────────── */}
-                    <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4">
-                        <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
-                            {/* Search */}
-                            <div className="relative flex-1">
-                                <IconSearch size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Cari nama, komentar, atau lokasi..."
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-9 pr-4 text-sm focus:ring-2 focus:ring-[#10B981] focus:border-transparent outline-none transition-all"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
-
-                            {/* Lokasi Select2 */}
-                            <div className="min-w-[220px]">
-                                <Select
-                                    options={lokasis?.map(l => ({ value: l.id, label: l.lokasi }))}
-                                    value={lokasis?.map(l => ({ value: l.id, label: l.lokasi })).find(o => o.value === selectedLokasi) || null}
-                                    onChange={(opt) => setSelectedLokasi(opt ? opt.value : null)}
-                                    placeholder="Semua Lokasi"
-                                    isClearable
-                                    menuPortalTarget={document.body}
-                                    menuPosition="fixed"
-                                    styles={{
-                                        control: (b, s) => ({
-                                            ...b,
-                                            borderColor: s.isFocused ? '#10B981' : '#e2e8f0',
-                                            borderRadius: '0.75rem',
-                                            backgroundColor: '#f8fafc',
-                                            minHeight: '42px',
-                                            boxShadow: s.isFocused ? '0 0 0 2px #10B98133' : 'none',
-                                            '&:hover': { borderColor: '#94a3b8' },
-                                        }),
-                                        menu: (b) => ({ ...b, borderRadius: '0.75rem', overflow: 'hidden', fontSize: '13px' }),
-                                        menuPortal: (b) => ({ ...b, zIndex: 9999 }),
-                                        placeholder: (b) => ({ ...b, color: '#94a3b8', fontSize: '14px' }),
-                                        singleValue: (b) => ({ ...b, fontSize: '14px' }),
-                                    }}
-                                />
-                            </div>
-
-                            {/* Rating filter */}
-                            <div className="relative">
-                                <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                <select
-                                    className="appearance-none bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-8 pr-8 text-sm focus:ring-2 focus:ring-[#10B981] outline-none cursor-pointer"
-                                    value={selectedRating}
-                                    onChange={(e) => setSelectedRating(e.target.value)}
-                                >
-                                    <option value="all">Semua Rating</option>
-                                    {[5, 4, 3, 2, 1].map(r => <option key={r} value={r}>{r} Bintang</option>)}
-                                </select>
-                                <IconChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                            </div>
-
-                            {/* Status filter */}
-                            <div className="relative">
-                                <select
-                                    className="appearance-none bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-4 pr-8 text-sm focus:ring-2 focus:ring-[#10B981] outline-none cursor-pointer"
-                                    value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
-                                >
-                                    <option value="all">Semua Status</option>
-                                    <option value="disetujui">Disetujui</option>
-                                    <option value="menunggu">Menunggu</option>
-                                    <option value="ditolak">Ditolak</option>
-                                </select>
-                                <IconChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                            </div>
-
-                            {/* Reset Button */}
-                            {hasActiveFilter && (
-                                <button
-                                    onClick={handleReset}
-                                    className="inline-flex items-center gap-2 justify-center rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-600 transition-all hover:bg-slate-200 hover:text-slate-800"
-                                >
-                                    <IconRefresh size={16} stroke={2} />
-                                    Reset
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* ── TABLE ─────────────────────────────────────────── */}
-                    <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-                        {displayUlasans.length > 0 ? (
-                            <>
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-slate-100 text-sm">
-                                        <thead className="bg-slate-50">
-                                            <tr>
-                                                <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider w-8">#</th>
-                                                <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Nama</th>
-                                                <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Lokasi</th>
-                                                <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Rating</th>
-                                                <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Komentar</th>
-                                                <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tanggal</th>
-                                                <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                                                <th className="px-4 py-3 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-50">
-                                            {displayUlasans.map((ulasan, idx) => {
-                                                const pageStart = ((ulasans.current_page ?? 1) - 1) * (ulasans.per_page ?? 15);
-                                                return (
-                                                    <tr key={ulasan.id} className="hover:bg-slate-50/60 transition-colors group">
-                                                        {/* No */}
-                                                        <td className="px-4 py-3 text-slate-400 text-xs font-medium">{pageStart + idx + 1}</td>
-
-                                                        {/* Nama + avatar */}
-                                                        <td className="px-4 py-3">
-                                                            <div className="flex items-center gap-2.5">
-                                                                <img
-                                                                    src={ulasan.avatar}
-                                                                    alt={ulasan.nama}
-                                                                    className="w-8 h-8 rounded-full object-cover ring-2 ring-emerald-100 shrink-0"
-                                                                />
-                                                                <span className="font-semibold text-slate-800 whitespace-nowrap">{ulasan.nama}</span>
-                                                            </div>
-                                                        </td>
-
-                                                        {/* Lokasi */}
-                                                        <td className="px-4 py-3">
-                                                            <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full whitespace-nowrap max-w-[180px] truncate">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                                                                {ulasan.lokasi}
-                                                            </span>
-                                                        </td>
-
-                                                        {/* Rating */}
-                                                        <td className="px-4 py-3">
-                                                            <StarRow rating={ulasan.rating} />
-                                                        </td>
-
-                                                        {/* Komentar */}
-                                                        <td className="px-4 py-3 max-w-xs">
-                                                            <p className="text-slate-600 text-xs leading-relaxed line-clamp-2">
-                                                                {ulasan.komentar || <span className="text-slate-300 italic">— tidak ada komentar —</span>}
-                                                            </p>
-                                                        </td>
-
-                                                        {/* Tanggal + Jam */}
-                                                        <td className="px-4 py-3 whitespace-nowrap">
-                                                            <p className="text-xs text-slate-600 font-medium">{ulasan.tanggal}</p>
-                                                            <p className="text-[10px] text-slate-400">{ulasan.jam} WIB</p>
-                                                        </td>
-
-                                                        {/* Status */}
-                                                        <td className="px-4 py-3">
-                                                            {isAdminOrSuper ? (
-                                                                <div className="relative">
-                                                                    <select
-                                                                        className={`appearance-none text-[10px] font-extrabold uppercase tracking-wider pl-2.5 pr-6 py-1 rounded-full border-none focus:ring-0 cursor-pointer outline-none ${ulasan.status === 'disetujui' ? 'bg-emerald-50 text-emerald-700' :
-                                                                                ulasan.status === 'ditolak' ? 'bg-red-50 text-red-700' :
-                                                                                    'bg-amber-50 text-amber-700'
-                                                                            }`}
-                                                                        value={ulasan.status}
-                                                                        onChange={(e) => handleStatusChange(ulasan.id, e.target.value)}
-                                                                    >
-                                                                        <option value="disetujui">Disetujui</option>
-                                                                        <option value="menunggu">Menunggu</option>
-                                                                        <option value="ditolak">Ditolak</option>
-                                                                    </select>
-                                                                </div>
-                                                            ) : (
-                                                                <StatusBadge status={ulasan.status} />
-                                                            )}
-                                                        </td>
-
-                                                        {/* Aksi */}
-                                                        <td className="px-4 py-3">
-                                                            <div className="flex items-center justify-center gap-1.5">
-                                                                {ulasan.foto && (
-                                                                    <button
-                                                                        onClick={() => setSelectedPhoto(ulasan.foto)}
-                                                                        title="Lihat Foto"
-                                                                        className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                                    >
-                                                                        <IconPhoto size={15} stroke={2} />
-                                                                    </button>
-                                                                )}
-                                                                {isAdminOrSuper && (
-                                                                    <button
-                                                                        onClick={() => confirmDelete(ulasan.id)}
-                                                                        title="Hapus Ulasan"
-                                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                                    >
-                                                                        <IconTrash size={15} stroke={2} />
-                                                                    </button>
-                                                                )}
-                                                                {!ulasan.foto && !isAdminOrSuper && (
-                                                                    <span className="text-slate-300 text-xs italic">—</span>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
+                    <ServerSideDataTable
+                        ajaxUrl={route('ulasan.data')}
+                        columns={columns}
+                        customActions={ulasanActions}
+                        queryParams={{ rating: selectedRating, status: selectedStatus, lokasi_id: selectedLokasi }}
+                        filterSlot={
+                            <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center w-full lg:w-auto">
+                                {/* Lokasi Select2 */}
+                                <div className="min-w-[220px]">
+                                    <Select
+                                        options={lokasis?.map(l => ({ value: l.id, label: l.lokasi }))}
+                                        value={lokasis?.map(l => ({ value: l.id, label: l.lokasi })).find(o => o.value === selectedLokasi) || null}
+                                        onChange={(opt) => setSelectedLokasi(opt ? opt.value : null)}
+                                        placeholder="Semua Lokasi"
+                                        isClearable
+                                        menuPortalTarget={document.body}
+                                        menuPosition="fixed"
+                                        styles={{
+                                            control: (b, s) => ({
+                                                ...b,
+                                                borderColor: s.isFocused ? '#10B981' : '#e2e8f0',
+                                                borderRadius: '0.75rem',
+                                                backgroundColor: '#f8fafc',
+                                                minHeight: '42px',
+                                                boxShadow: s.isFocused ? '0 0 0 2px #10B98133' : 'none',
+                                                '&:hover': { borderColor: '#94a3b8' },
+                                            }),
+                                            menu: (b) => ({ ...b, borderRadius: '0.75rem', overflow: 'hidden', fontSize: '13px' }),
+                                            menuPortal: (b) => ({ ...b, zIndex: 9999 }),
+                                            placeholder: (b) => ({ ...b, color: '#94a3b8', fontSize: '14px' }),
+                                            singleValue: (b) => ({ ...b, fontSize: '14px' }),
+                                        }}
+                                    />
                                 </div>
 
-                                {/* Footer: count + pagination */}
-                                <div className="px-5 py-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/50">
-                                    <p className="text-xs text-slate-400">
-                                        Menampilkan <span className="font-bold text-slate-600">{displayUlasans.length}</span> dari <span className="font-bold text-slate-600">{ulasans.total}</span> ulasan
-                                    </p>
-                                    {ulasans.last_page > 1 && (
-                                        <Pagination links={ulasans.links} />
-                                    )}
+                                {/* Rating filter */}
+                                <div className="relative">
+                                    <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    <select
+                                        className="appearance-none bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-8 pr-8 text-sm focus:ring-2 focus:ring-[#10B981] outline-none cursor-pointer"
+                                        value={selectedRating}
+                                        onChange={(e) => setSelectedRating(e.target.value)}
+                                    >
+                                        <option value="all">Semua Rating</option>
+                                        {[5, 4, 3, 2, 1].map(r => <option key={r} value={r}>{r} Bintang</option>)}
+                                    </select>
+                                    <IconChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                 </div>
-                            </>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center py-20 text-center">
-                                <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                                    <IconMessage2 size={28} className="text-slate-300" stroke={1.5} />
+
+                                {/* Status filter */}
+                                <div className="relative">
+                                    <select
+                                        className="appearance-none bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-4 pr-8 text-sm focus:ring-2 focus:ring-[#10B981] outline-none cursor-pointer"
+                                        value={selectedStatus}
+                                        onChange={(e) => setSelectedStatus(e.target.value)}
+                                    >
+                                        <option value="all">Semua Status</option>
+                                        <option value="disetujui">Disetujui</option>
+                                        <option value="menunggu">Menunggu</option>
+                                        <option value="ditolak">Ditolak</option>
+                                    </select>
+                                    <IconChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                 </div>
-                                <h3 className="text-base font-bold text-slate-700">Tidak ada ulasan ditemukan</h3>
-                                <p className="text-sm text-slate-400 mt-1">Coba sesuaikan filter atau kata kunci pencarian.</p>
+
+                                {/* Reset Button */}
+                                {hasActiveFilter && (
+                                    <button
+                                        onClick={handleReset}
+                                        className="inline-flex items-center gap-2 justify-center rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-600 transition-all hover:bg-slate-200 hover:text-slate-800"
+                                    >
+                                        <IconRefresh size={16} stroke={2} />
+                                        Reset
+                                    </button>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        }
+                    />
 
                 </div>
             </div>
